@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel='stylesheet' href='stylesheets/style.css' />
+    <style>
+        .nav-item:focus-within .subnav {
+            max-height: 500px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .subnav {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div
+                        class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                        A
+                    </div>
+                    <span class="ml-2 font-semibold">Admin</span>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="font-semibold mb-2">My Projects</h3>
+                <nav class="w-full min-h-screen py-4">
+                    <ul class="space-y-2">
+                        <% if (baselists.length> 0) { %>
+                            <% baselists.forEach(list=> { %>
+                                <li class="nav-item items-center py-1 px-4 rounded-md mb-2">
+                                    <div class="flex items-center justify-between">
+                                        <a href="#"
+                                            class="block py-2 px-4 rounded flex items-center justify-between hover:bg-gray-100">
+                                            # <%= list.title %>
+                                                <% if (basesublists.some(sublist=> sublist.google_list_id === list.id))
+                                                    { %>
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                    <% } %>
+                                        </a>
+                                        <button onclick="openModal('<%= list.id %>')">
+                                            <img src="/images/add.png" class="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    <% if (basesublists.some(sublist=> sublist.google_list_id === list.id)) { %>
+                                        <ul class="subnav space-y-1">
+                                            <% basesublists.filter(basesublist=> basesublist.google_list_id ===
+                                                list.id).forEach(basesublist => { %>
+                                                <% basesublist.sublists.forEach(sublist=> { %>
+                                                    <li>
+                                                        <div class="flex items-center justify-between">
+
+                                                            <a href="#" class="block py-2 px-4 rounded">
+                                                                <%=sublist %>
+                                                            </a>
+
+                                                            <!-- <a href="#" class="block py-2 px-4 rounded">
+                                                            <%= basesublist.sublists %>
+                                                        </a> -->
+                                                            <form
+                                                                action="/dashboard/delete/<%= basesublist.google_list_id %>"
+                                                                method="POST" style="display: inline;">
+                                                                <button type="submit">
+                                                                    <img title="Delete" src="/images/minus.png"
+                                                                        class="w-4 h-4" />
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </li>
+                                                    <% }); %>
+                                                        <% }) %>
+                                        </ul>
+                                        <% } %>
+                                </li>
+                                <% }) %>
+                                    <% } else { %>
+                                        <p>No lists available.</p>
+                                        <% } %>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-8">
+            <h1 class="text-3xl font-bold mb-4">Today</h1>
+            <p class="text-gray-600 mb-6">3 tasks</p>
+
+            <!-- Task Sections -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Overdue</h2>
+                    <button class="text-red-500 text-sm">Reschedule</button>
+                </div>
+
+                <ul>
+                    <li class="mb-3">
+                        <label class="flex items-start">
+                            <input type="checkbox" class="mt-1 mr-3" />
+                            <span>
+                                <span class="font-medium">Download Todoist on all your devices and email for 📱, 💻,
+                                    🖥️, and 📧</span>
+                                <br />
+                                <span class="text-sm text-red-500">28 Aug</span>
+                            </span>
+                        </label>
+                    </li>
+                    <li class="mb-3">
+                        <label class="flex items-start">
+                            <input type="checkbox" class="mt-1 mr-3" />
+                            <span>
+                                <span class="font-medium">Take the productivity method quiz</span>
+                                <br />
+                                <span class="text-sm text-gray-500">Get a personalized recommendation from
+                                    Todoist</span>
+                                <br />
+                                <span class="text-sm text-red-500">Yesterday</span>
+                            </span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Today's Tasks -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold mb-4">30 Aug · Today · Friday</h2>
+                <ul>
+                    <li class="mb-3">
+                        <label class="flex items-start">
+                            <input type="checkbox" class="mt-1 mr-3" />
+                            <span>
+                                <span class="font-medium">Browse the Todoist Inspiration Hub</span>
+                                <br />
+                                <span class="text-sm text-gray-500">For productivity advice and to sign up for our
+                                    newsletter</span>
+                            </span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Create Sub List</h3>
+            <form id="createListForm">
+                <input type="hidden" id="listId" name="listId" required class="mt-2 p-2 w-full border rounded">
+                <input type="text" id="listName" name="listName" required class="mt-2 p-2 w-full border rounded"
+                    placeholder="Enter list name">
+                <div class="mt-4">
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Create</button>
+                    <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('listId').value = id;
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('listId').value = '';
+        }
+
+        document.getElementById('createListForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const sublist_name = document.getElementById('listName').value;
+            const google_list_id = document.getElementById('listId').value;
+
+            fetch('/tasks/subList/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sublist_name, google_list_id }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === "Sublist added successfully") {
+                        // window.location.href = `/tasks/list`;
+                        window.location.reload();
+                        closeModal();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+</body>
+
+</html>
