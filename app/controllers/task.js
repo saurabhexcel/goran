@@ -113,11 +113,10 @@ exports.getTaskList = async (req, res) => {
                 listid: listId,
                 sublists: Object.values(googleList[listId].sublists || {}).map(sublist => {
                     console.log(`Processing sublist: ${sublist.sublist_name}`);
-                    return sublist.sublist_name;
-                    // return {
-                    //     sublist_id: sublist.sublist_id,  // Ensure this exists
-                    //     sublist_name: sublist.sublist_name
-                    // };
+                    return {
+                        sublist_id: sublist.sublist_id,  // Ensure this exists
+                        sublist_name: sublist.sublist_name
+                    };
                 })
             };
         });
@@ -505,7 +504,7 @@ exports.getListSectionsByListId = async (req, res) => {
         // Retrieve sections for the specified google_list_id
         const sections = Udata.google_lists[google_list_id].sections || {};
 
-        res.status(200).json({ message: 'Sections retrieved successfully', sections });
+        res.status(200).json({ message: 'Sections retrieved successfully', sections:Object.values(sections) });
     } catch (error) {
         console.error('Error retrieving Google list sections:', error);
         res.status(500).json({ message: 'Failed to retrieve Google list sections' });
