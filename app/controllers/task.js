@@ -93,7 +93,8 @@ exports.getTaskList = async (req, res) => {
                 Udata.google_lists[list.id] = {
                     google_list_id: list.id,
                     google_list_name: list.title,
-                    sublists: {}
+                    sublists: {},
+                    sections:{}
                 };
             }
         });
@@ -112,10 +113,11 @@ exports.getTaskList = async (req, res) => {
                 listid: listId,
                 sublists: Object.values(googleList[listId].sublists || {}).map(sublist => {
                     console.log(`Processing sublist: ${sublist.sublist_name}`);
-                    return {
-                        sublist_id: sublist.sublist_id,  // Ensure this exists
-                        sublist_name: sublist.sublist_name
-                    };
+                    return sublist.sublist_name;
+                    // return {
+                    //     sublist_id: sublist.sublist_id,  // Ensure this exists
+                    //     sublist_name: sublist.sublist_name
+                    // };
                 })
             };
         });
@@ -137,8 +139,12 @@ exports.getTaskList = async (req, res) => {
 exports.addSublist = async (req, res) => {
     try {
 
+        const token = req.cookies.jwt;
+        const decoded = jwt.verify(token, 'secretsecret');
+        const userEmail = decoded.email;
+
         if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' });
+            return res.status(401).json({ message: 'User not authenticated' ``});
         }
 
         const { google_list_id, sublist_name } = req.body;
@@ -343,9 +349,8 @@ exports.getSublistSections = async (req, res) => {
         const token = req.cookies.jwt;
         const decoded = jwt.verify(token, 'secretsecret');
         const userEmail = decoded.email;
-        
-        // Extract user email, google_list_id, and sublist_id from the request payload
-        const { google_list_id, sublist_id } = req.body;
+
+        const { google_list_id, sublist_id } = req.query;
         
         // Validate input parameters
         if (!userEmail || !google_list_id || !sublist_id) {
@@ -408,5 +413,101 @@ exports.getSublistSections = async (req, res) => {
     } catch (err) {
         console.error('Error fetching sections:', err);
         return res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
+}
+
+exports.addListSection = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        const decoded = jwt.verify(token, 'secretsecret');
+        const userEmail = decoded.email;
+
+        const { google_list_id, section_name } = req.body;
+
+        if (!userEmail) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Retrieve user data
+        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+
+        if (!userData || !userData.data) {
+            return res.status(404).json({ message: 'User data not found' });
+        }
+
+        let Udata;
+        try {
+            Udata = JSON.parse(userData.data);
+        } catch (error) {
+            return res.status(500).json({ message: 'Error parsing user data' });
+        }
+
+        // Check if google_list_id exists in the user's data
+        if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
+            return res.status(404).json({ message: 'List not found' });
+        }
+
+        // Generate a unique section ID
+        const section_id = Date.now().toString();
+
+        // Add the new section to the specified google_list_id
+        if (!Udata.google_lists[google_list_id].sections) {
+            Udata.google_lists[google_list_id].sections = {};
+        }
+
+        Udata.google_lists[google_list_id].sections[section_id] = {
+            section_id,
+            section_name
+        };
+
+        // Update the user data in the database
+        await knex('googleUsers').where({ email: userEmail }).update({ data: JSON.stringify(Udata) });
+
+        res.status(201).json({ message: 'Section added successfully', data: Udata });
+    } catch (error) {
+        console.error('Error adding Google list section:', error);
+        res.status(500).json({ message: 'Failed to add Google list section' });
+    }
+};
+
+
+exports.getListSectionsByListId = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        const decoded = jwt.verify(token, 'secretsecret');
+        const userEmail = decoded.email;
+
+        const { google_list_id } = req.query;
+
+        if (!userEmail) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+
+        // Retrieve user data
+        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+
+        if (!userData || !userData.data) {
+            return res.status(404).json({ message: 'User data not found' });
+        }
+
+        let Udata;
+        try {
+            Udata = JSON.parse(userData.data);
+        } catch (error) {
+            return res.status(500).json({ message: 'Error parsing user data' });
+        }
+
+        // Check if google_list_id exists in the user's data
+        if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
+            return res.status(404).json({ message: 'List not found' });
+        }
+
+        // Retrieve sections for the specified google_list_id
+        const sections = Udata.google_lists[google_list_id].sections || {};
+
+        res.status(200).json({ message: 'Sections retrieved successfully', sections });
+    } catch (error) {
+        console.error('Error retrieving Google list sections:', error);
+        res.status(500).json({ message: 'Failed to retrieve Google list sections' });
     }
 };
