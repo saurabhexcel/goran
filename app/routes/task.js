@@ -7,10 +7,11 @@ const { verifyToken } = require('../middlewares');
 router.get('/', taskController.getTasksList);
 router.get('/list', taskController.getTaskList);
 router.post('/subList/add', taskController.addSublist);
-router.post('/section/add', taskController.addSection);
 router.get('/list/all', taskController.getLists);
 router.get('/subList/all', taskController.getAllSublists);
-router.get('/gapi/allTask', taskController.listFromGapi);
+router.post('/subList/section/add', taskController.addSublistSections);
+router.get('/subList/section/get', taskController.getSublistSections);
+// router.get('/gapi/allTask', taskController.listFromGapi);
 
 module.exports = router;
 

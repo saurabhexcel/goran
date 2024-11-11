@@ -126,7 +126,7 @@ exports.callbackFunction = async (req, res) => {
         }
 
         // Store the email in the JWT for later access
-        const token = jwt.sign({ email }, 'your_jwt_secret', { expiresIn: '24h' });
+        const token = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
         res.cookie('jwt', token);
         
         // Redirect to the desired route after successful authentication
