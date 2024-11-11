@@ -55,7 +55,6 @@ exports.getTaskList = async (req, res) => {
         }
 
         const lists = taskLists.data.items;
-        console.log('Task Lists:', lists);
 
         // Check if email exists in the token
         if (!email) {
@@ -65,23 +64,17 @@ exports.getTaskList = async (req, res) => {
 
         // Fetch user data from DB
         let userData = await knex('googleUsers').where({ email }).first();
-        console.log('User Data from DB:', userData);
 
-        if (!userData) {
+        if (userData && typeof userData.data === 'string') {
             try {
-                // If user doesn't exist, create a new record
-                console.log('User not found in DB, creating new user...');
-                await knex('googleUsers').insert({ email: email, data: { google_lists: {} } });
-                userData = await knex('googleUsers').where({ email }).first();
-                console.log('Created and fetched new user:', userData);
-            } catch (error) {
-                console.error('Error inserting user into DB:', error);
-                return res.status(500).json({ message: 'Failed to store user in DB', error: error.message });
+                userData.data = JSON.parse(userData.data);
+            } catch (parseError) {
+                console.error('Error parsing user data:', parseError);
+                return res.status(500).json({ message: 'Failed to parse user data' });
             }
         }
 
         let Udata = userData.data || { google_lists: {} };
-        console.log('User Data (Udata):', Udata);
 
         // Initialize google_lists if missing
         if (!Udata.google_lists) {
@@ -127,14 +120,12 @@ exports.getTaskList = async (req, res) => {
             baselists: lists.length > 0 ? lists : [],
             basesublists: basesublists.length > 0 ? basesublists : [],
         });
+ 
     } catch (err) {
         console.error('Error processing request:', err);
         res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
-
-
-
 
 exports.addSublist = async (req, res) => {
     try {
@@ -150,13 +141,22 @@ exports.addSublist = async (req, res) => {
         const { google_list_id, sublist_name } = req.body;
 
         // Fetch existing data from the 'googleUsers' table
-        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+        let userData = await knex('googleUsers').where({ email: userEmail }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
         }
 
+        // Parse the data if stored as a longtext string
         let Udata = userData.data;
+        if (typeof Udata === 'string') {
+            try {
+                Udata = JSON.parse(Udata);
+            } catch (parseError) {
+                console.error('Error parsing user data:', parseError);
+                return res.status(500).json({ message: 'Failed to parse user data' });
+            }
+        }
 
         // Check if the google_list_id exists in the user's data
         if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
@@ -183,20 +183,6 @@ exports.addSublist = async (req, res) => {
     }
 };
 
-
-exports.listFromGapi = async (req, res) => {
-    try {
-        // Initialize Google API client
-        const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
-        const taskLists = await tasksApi.tasklists.list();
-        console.log('Google Task Lists:', taskLists);
-
-        res.status(200).json({message:"Google API List Fetched", Lists:taskLists})
-    } catch (error) {
-        console.error('Error adding sublist:', error);
-        res.status(500).json({ message: 'Failed to add sublist' });
-    }
-}
 
 exports.getAllSublists = async (req, res) => {
 
