@@ -439,81 +439,86 @@
           }
         }
         function displayData(data) {
-          const container = document.getElementById("data-container");
-          container.innerHTML = "";
-          if (data && Array.isArray(data.data)) {
-            const sections = data.data.reduce((acc, task) => {
-              const sublistSplit = task.title.split(' s-');
-              let sectionName = "No Sublist / Section";
-              let taskTitle = task.title;
+  const container = document.getElementById("data-container");
+  container.innerHTML = "";
 
-              if (sublistSplit.length > 1) {
-                taskTitle = sublistSplit[0];
-                const sectionExtract = sublistSplit[1].split('#')[1];
-                if (sectionExtract) {
-                  sectionName = sectionExtract.trim();
-                }
-              } else {
-                const hashSplit = task.title.split('#');
-                if (hashSplit.length > 1) {
-                  taskTitle = hashSplit[0].trim();
-                  sectionName = hashSplit[1].trim();
-                }
-              }
+  if (data && Array.isArray(data.data)) {
+    // Filter out tasks with "s-" in the title
+    const filteredData = data.data.filter(task => !task.title.includes('s-'));
 
-              if (!acc[sectionName]) {
-                acc[sectionName] = [];
-              }
-              acc[sectionName].push({ ...task, title: taskTitle });
-              return acc;
-            }, {});
+    const sections = filteredData.reduce((acc, task) => {
+      const sublistSplit = task.title.split(' s-');
+      let sectionName = "No Sublist / Section";
+      let taskTitle = task.title;
 
-            const sectionRow = document.createElement("div");
-            sectionRow.classList.add("flex", "flex-wrap", "gap-4");
-
-            Object.keys(sections).forEach(sectionName => {
-              const sectionContainer = document.createElement("div");
-              sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg", "w-1/6");
-              const sectionHeader = document.createElement("p");
-              sectionHeader.textContent = sectionName || "No Section";
-              sectionHeader.classList.add("mb-4");
-
-              if (sectionName === "No Sublist / Section") {
-                sectionHeader.classList.add("text-red-500");
-              }
-
-              const taskContainer = document.createElement("div");
-              taskContainer.classList.add("flex", "flex-col");
-
-              sections[sectionName].forEach(task => {
-                const dueDate = task.due ? new Date(task.due) : null;
-                const formattedDate = dueDate ? `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
-
-                const taskCard = document.createElement("div");
-                taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
-
-                let taskCardHTML = `
-                  ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
-                  ${sectionName !== "No Sublist / Section" && sectionName ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>` : ""}
-                  ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
-                `;
-
-                taskCard.innerHTML = taskCardHTML;
-                taskContainer.appendChild(taskCard);
-              });
-
-              sectionContainer.appendChild(sectionHeader);
-              sectionContainer.appendChild(taskContainer);
-
-              sectionRow.appendChild(sectionContainer);
-            });
-
-            container.appendChild(sectionRow);
-          } else {
-            console.error("Data is missing or not in expected format.");
-            container.innerHTML = `<div class="text-red-500">No sections available to display.</div>`;
-          }
+      // Split task title and extract section if it exists
+      if (sublistSplit.length > 1) {
+        taskTitle = sublistSplit[0];
+        const sectionExtract = sublistSplit[1].split('#')[1];
+        if (sectionExtract) {
+          sectionName = sectionExtract.trim();
         }
+      } else {
+        const hashSplit = task.title.split('#');
+        if (hashSplit.length > 1) {
+          taskTitle = hashSplit[0].trim();
+          sectionName = hashSplit[1].trim();
+        }
+      }
+
+      if (!acc[sectionName]) {
+        acc[sectionName] = [];
+      }
+      acc[sectionName].push({ ...task, title: taskTitle });
+      return acc;
+    }, {});
+
+    const sectionRow = document.createElement("div");
+    sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+
+    Object.keys(sections).forEach(sectionName => {
+      const sectionContainer = document.createElement("div");
+      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg", "w-1/6");
+
+      const sectionHeader = document.createElement("p");
+      sectionHeader.textContent = sectionName || "No Section";
+      sectionHeader.classList.add("mb-4");
+
+      if (sectionName === "No Sublist / Section") {
+        sectionHeader.classList.add("text-red-500");
+      }
+
+      const taskContainer = document.createElement("div");
+      taskContainer.classList.add("flex", "flex-col");
+
+      sections[sectionName].forEach(task => {
+        const dueDate = task.due ? new Date(task.due) : null;
+        const formattedDate = dueDate ? `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
+
+        const taskCard = document.createElement("div");
+        taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
+
+        let taskCardHTML = `
+          ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
+          ${sectionName !== "No Sublist / Section" && sectionName ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>` : ""}
+          ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
+        `;
+
+        taskCard.innerHTML = taskCardHTML;
+        taskContainer.appendChild(taskCard);
+      });
+
+      sectionContainer.appendChild(sectionHeader);
+      sectionContainer.appendChild(taskContainer);
+      sectionRow.appendChild(sectionContainer);
+    });
+
+    container.appendChild(sectionRow);
+  } else {
+    console.error("Data is missing or not in expected format.");
+    container.innerHTML = `<div class="text-red-500">No sections available to display.</div>`;
+  }
+}
 
         function closeSectionModal() {
                 document.getElementById("sectionModal").classList.add("hidden");
