@@ -13,7 +13,7 @@ router.post('/add/subList/section', taskController.addSublistSections);
 router.get('/subList/section', taskController.getSublistSections);
 router.post('/add/listSection',taskController.addListSection)
 router.get('/listSection',taskController.getListSectionsByListId)
-router.get('/googleTasks',taskController.getTasks)
+router.get('/googleTasks',taskController.getTasksbyId)
 
 // router.get('/gapi/allTask', taskController.listFromGapi);
 

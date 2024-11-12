@@ -511,7 +511,7 @@ exports.getListSectionsByListId = async (req, res) => {
     }
 };
 
-exports.getTasks = async (req, res) => {
+exports.getTasksbyId = async (req, res) => {
     try {
         const token = req.cookies.jwt;
         const decoded = jwt.verify(token, 'secretsecret');
