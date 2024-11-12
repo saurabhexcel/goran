@@ -510,3 +510,27 @@ exports.getListSectionsByListId = async (req, res) => {
         res.status(500).json({ message: 'Failed to retrieve Google list sections' });
     }
 };
+
+exports.getTasks = async (req, res) => {
+    try {
+        const token = req.cookies.jwt;
+        const decoded = jwt.verify(token, 'secretsecret');
+        const userEmail = decoded.email;
+
+        if (!userEmail) {
+            return res.status(401).json({ message: 'User not authenticated' ``});
+        }
+        const {google_list_id} = req.query
+
+        const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
+
+        const tasks = await tasksApi.tasks.list({ tasklist: google_list_id });
+        const data = tasks.data.items
+
+        res.status(200).json({ message: 'tasks retrieved successfully', data});
+
+    } catch (error) {
+        console.error('Error retrieving Google tasks :', error);
+        res.status(500).json({ message: 'Failed to retrieve Google tasks' });
+    }
+};
