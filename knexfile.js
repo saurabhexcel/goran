@@ -8,7 +8,7 @@ module.exports = {
             host: 'localhost',
             port: 3306,
             user: 'root',
-            password: 'password',
+            password: 'root',
             database: 'skillcea_gootask',
             migrations: {
                 directory: "./knex/migrations",
