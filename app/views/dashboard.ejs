@@ -47,7 +47,7 @@
                     <a
                       href="#"
                       class="block py-2 px-4 rounded flex items-center justify-between hover:bg-gray-100"
-                      onclick="addListSection('<%= list.id %>')"
+                      onclick="addListSection('<%= list.id %>','<%= list.title %>')"
                     >
                       # <%= list.title %> <% if (basesublists.some(sublist=>
                       sublist.google_list_id === list.id)) { %>
@@ -82,7 +82,7 @@
                       <div class="flex items-center justify-between">
                         <a
                           href="#"
-                          onclick="openSection('<%= sublist.sublist_id %>,<%= list.id %>')"
+                          onclick="openSection('<%= sublist.sublist_id %>','<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
                           class="block py-2 px-4 rounded"
                         >
                           <%=sublist.sublist_name %>
@@ -335,11 +335,9 @@
     </div>
 
       <script>
-        function openSection(ids) {
+        function openSection(sublistId, baselistId,sublistTitle,listTitle) {
           const mainContent = document.getElementById("main-content");
-          const [sublistId, baselistId] = ids.split(",");
-
-          // Call the GET API to fetch section data
+          // const [sublistId, baselistId] = ids.split(",");
       fetch(`/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`)
         .then((response) => response.json())
         .then((data) => {
@@ -352,15 +350,20 @@
 
 
           mainContent.innerHTML = `
+          <h2 class="font-semibold">${listTitle} / ${sublistTitle}</h2>
           <button onclick="openSectionModal('${sublistId},${baselistId}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
-          <div class="flex flex-wrap gap-4">
-                      ${sectionsHTML}
-                  </div>
+                  <div id="sublist-container"></div>
+                  
       `;
-        }).catch((error) => console.error("Error fetching sections:", error));
-        }
+      const storedData = localStorage.getItem(`apiData_${baselistId}`);
+
+      if (storedData) {
+        displayLocalData(JSON.parse(storedData));
+      }
+      }).catch((error) => console.error("Error fetching sections:", error));
+      }
         
-        function addListSection(id){
+        function addListSection(id,title){
           const mainContent = document.getElementById("main-content");
           //  Call the GET API to fetch section data
           
@@ -376,6 +379,7 @@
 
 
           mainContent.innerHTML = `
+          <h2 class="font-semibold">${title}</h2>
           <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
           <button onclick="fetchAndDisplayData('${id}')"   class="px-4 text-[12px] font-semibold text-black border border-black rounded">REFRESH</button>
         
@@ -383,20 +387,20 @@
         
       `;
       const storedData = localStorage.getItem(`apiData_${id}`);
-      console.log(id,"dataa=====================")
 
       if (storedData) {
-        // Use data from localStorage if it exists
         displayData(JSON.parse(storedData));
       }
         }).catch((error) => console.error("Error fetching sections:", error));
-        }
+      }
+
         function addNewItem(listId) {
           // Open a form modal or navigate to an "Add New Item" page
           alert(`Adding a new item for list ID: ${listId}`);
           // For example, you could navigate to: window.location.href = `/add-item?listId=${listId}`;
         }
         const originalContent = document.getElementById("main-content").innerHTML;
+
         function goBack() {
           const mainContent = document.getElementById("main-content");
           mainContent.innerHTML = originalContent;
@@ -410,12 +414,14 @@
           document.getElementById("modal").classList.add("hidden");
           document.getElementById("sectionId").value = "";
         }
+
         function openSectionModal(ids) {
           const [sublistId, baselistId] = ids.split(",");
           document.getElementById("sectionModal").classList.remove("hidden");
           document.getElementById("sectionId").value = sublistId;
           document.getElementById("baseListId").value = baselistId;
         }
+
         function openListSectionModal(id) {
           
           document.getElementById("listSectionModal").classList.remove("hidden");
@@ -424,18 +430,21 @@
         }
 
         function fetchAndDisplayData(id) {
+          localStorage.clear();
           const storedData = localStorage.getItem(`apiData_${id}`);
 
           if (storedData) {
             displayData(JSON.parse(storedData));
           } else {
-            fetch(`/tasks/googleTasks?google_list_id=${id}`)
+            setTimeout(() => {
+              fetch(`/tasks/googleTasks?google_list_id=${id}`)
               .then(response => response.json())
               .then(data => {
                 localStorage.setItem(`apiData_${id}`, JSON.stringify(data));
                 displayData(data);
               })
               .catch(error => console.error("Error fetching data:", error));
+            }, 2000);
           }
         }
         function displayData(data) {
@@ -447,25 +456,16 @@
     const filteredData = data.data.filter(task => !task.title.includes('s-'));
 
     const sections = filteredData.reduce((acc, task) => {
-      const sublistSplit = task.title.split(' s-');
-      let sectionName = "No Sublist / Section";
-      let taskTitle = task.title;
-
-      // Split task title and extract section if it exists
-      if (sublistSplit.length > 1) {
-        taskTitle = sublistSplit[0];
-        const sectionExtract = sublistSplit[1].split('#')[1];
-        if (sectionExtract) {
-          sectionName = sectionExtract.trim();
-        }
-      } else {
-        const hashSplit = task.title.split('#');
-        if (hashSplit.length > 1) {
-          taskTitle = hashSplit[0].trim();
-          sectionName = hashSplit[1].trim();
-        }
+      const hashSplit = task.title.split('#');
+      let sectionName = "No Section";
+      let taskTitle = hashSplit[0].trim();
+      
+      // Check if there's a section name specified after '#'
+      if (hashSplit.length > 1) {
+        sectionName = hashSplit[1].trim();
       }
 
+      // Organize tasks by section
       if (!acc[sectionName]) {
         acc[sectionName] = [];
       }
@@ -478,13 +478,13 @@
 
     Object.keys(sections).forEach(sectionName => {
       const sectionContainer = document.createElement("div");
-      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg", "w-1/6");
+      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
 
       const sectionHeader = document.createElement("p");
-      sectionHeader.textContent = sectionName || "No Section";
+      sectionHeader.textContent = sectionName;
       sectionHeader.classList.add("mb-4");
 
-      if (sectionName === "No Sublist / Section") {
+      if (sectionName === "No Section") {
         sectionHeader.classList.add("text-red-500");
       }
 
@@ -493,14 +493,15 @@
 
       sections[sectionName].forEach(task => {
         const dueDate = task.due ? new Date(task.due) : null;
-        const formattedDate = dueDate ? `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
+        const formattedDate = dueDate ? 
+          `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
 
         const taskCard = document.createElement("div");
         taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
 
         let taskCardHTML = `
           ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
-          ${sectionName !== "No Sublist / Section" && sectionName ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>` : ""}
+          ${sectionName !== "No Section" ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>` : ""}
           ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
         `;
 
@@ -516,7 +517,97 @@
     container.appendChild(sectionRow);
   } else {
     console.error("Data is missing or not in expected format.");
-    container.innerHTML = `<div class="text-red-500">No sections available to display.</div>`;
+    container.innerHTML = '<div class="text-red-500">No sections available to display.</div>';
+  }
+}
+
+function displayLocalData(localData) {
+  console.log(localData, "===============");
+  const mainContent = document.getElementById("sublist-container");
+  mainContent.innerHTML = "";  // Clear existing content
+
+  if (localData && Array.isArray(localData.data)) {
+    // Filter tasks to include only those with "-s" in the title
+    const filteredData = localData.data.filter(task => task.title.includes('s-'));
+
+    // Group tasks based on the presence of "#"
+    const sections = filteredData.reduce((acc, task) => {
+      const hashSplit = task.title.split('#');
+      const sSplit = hashSplit[0].split('s-');
+      let sectionName = "No Section";  // Default section name
+      let taskTitle = sSplit[0].trim();  // Main task title
+      let sublistName = sSplit[1] ? sSplit[1].trim() : null;  // Sublist name from "-s"
+      let hashName = hashSplit[1] ? hashSplit[1].trim() : null;  // Name from "#"
+
+      // Determine section name based on "#" existence
+      if (hashName) {
+        sectionName = hashName;
+      }
+
+      // Organize tasks by section name
+      if (!acc[sectionName]) {
+        acc[sectionName] = [];
+      }
+      acc[sectionName].push({
+        ...task,
+        title: taskTitle,
+        sublist: sublistName,
+        hashName: hashName
+      });
+      return acc;
+    }, {});
+
+    // Create the sections and tasks layout
+    const sectionRow = document.createElement("div");
+    sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+
+    Object.keys(sections).forEach(sectionName => {
+      // Container for each section
+      const sectionContainer = document.createElement("div");
+      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
+
+      // Section header
+      const sectionHeader = document.createElement("p");
+      sectionHeader.textContent = sectionName;
+      sectionHeader.classList.add("mb-4");
+      if (sectionName === "No Section") {
+        sectionHeader.classList.add("text-red-500");
+      }
+
+      // Container for tasks in each section
+      const taskContainer = document.createElement("div");
+      taskContainer.classList.add("flex", "flex-col");
+
+      sections[sectionName].forEach(task => {
+        const dueDate = task.due ? new Date(task.due) : null;
+        const formattedDate = dueDate ? 
+          `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
+
+        // Task card layout
+        const taskCard = document.createElement("div");
+        taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
+
+        // Display four fields if both "-s" and "#" exist; otherwise, display three fields
+        let taskCardHTML = `
+          ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
+          ${task.sublist ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>` : ""}
+          ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
+          ${task.hashName ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>` : ""}
+        `;
+
+        taskCard.innerHTML = taskCardHTML;
+        taskContainer.appendChild(taskCard);
+      });
+
+      sectionContainer.appendChild(sectionHeader);
+      sectionContainer.appendChild(taskContainer);
+      sectionRow.appendChild(sectionContainer);
+    });
+
+    mainContent.appendChild(sectionRow);
+  } else {
+    console.error("Local data is missing or not in expected format.");
+    mainContent.innerHTML = '<div class="text-red-500">No sections available to display.</div>';
   }
 }
 
