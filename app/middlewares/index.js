@@ -20,7 +20,6 @@ module.exports = {
                     console.error('JWT Verification failed:', err);
                     return res.status(401).json({ message: 'Invalid or expired token' });
                 } else {
-
                     // if everything is good, save to request for use in other routes
                     req.decoded = decoded;
                     next();

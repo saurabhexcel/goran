@@ -21,32 +21,11 @@ exports.getTasksList = async (req, res) => {
 
 exports.getTaskList = async (req, res) => {
     try {
-        console.log('Request received at /tasks/list');
-
-        const token = req.cookies.jwt;
-        console.log('JWT Token:', token);
-
-        if (!token) {
-            return res.status(401).json({ message: 'No token provided, user is not authenticated' });
-        }
-
-        // Decode JWT Token
-        let decoded;
-        try {
-            decoded = jwt.verify(token, 'secretsecret');
-            console.log('Decoded JWT:', decoded);
-        } catch (err) {
-            console.error('JWT Verification failed:', err);
-            return res.status(401).json({ message: 'Invalid or expired token' });
-        }
-
-        const email = decoded.email;
-        console.log('Email from token:', email);
+        const {email} = req.decoded;
 
         // Initialize Google API client
         const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
         const taskLists = await tasksApi.tasklists.list();
-        console.log('Google Task Lists:', taskLists);
 
         // Check if task lists are returned
         if (!taskLists.data.items || taskLists.data.items.length === 0) {
@@ -55,17 +34,9 @@ exports.getTaskList = async (req, res) => {
         }
 
         const lists = taskLists.data.items;
-        console.log('Task Lists:', lists);
-
-        // Check if email exists in the token
-        if (!email) {
-            console.log('Email not found in token');
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
 
         // Fetch user data from DB
          let userData = await knex('googleUsers').where({ email }).first();
-        console.log('User Data from DB:', userData);
 
         if (userData && typeof userData.data === 'string') {
             try {
@@ -77,8 +48,6 @@ exports.getTaskList = async (req, res) => {
         }
 
         let Udata = userData.data || { google_lists: {} };
-        console.log('User Data (Udata):', Udata);
-        // Initialize google_lists if missing
 
         // Initialize google_lists if missing
         if (!Udata.google_lists) {
@@ -104,15 +73,12 @@ exports.getTaskList = async (req, res) => {
         await knex('googleUsers').where({ email }).update({ data: JSON.stringify(Udata) });
 
         const googleList = Udata.google_lists;
-        console.log('Google Lists (Udata.google_lists):', googleList);
 
         const basesublists = Object.keys(googleList).map(listId => {
-            console.log(`Processing list ID: ${listId}`);
             return {
                 ...googleList[listId],
                 listid: listId,
                 sublists: Object.values(googleList[listId].sublists || {}).map(sublist => {
-                    console.log(`Processing sublist: ${sublist.sublist_name}`);
                     return {
                         sublist_id: sublist.sublist_id,  // Ensure this exists
                         sublist_name: sublist.sublist_name
@@ -120,8 +86,6 @@ exports.getTaskList = async (req, res) => {
                 })
             };
         });
-
-        console.log('Basesublists:', basesublists);
 
         // Send the lists and sublists to the frontend
         res.render('dashboard', {
@@ -137,19 +101,11 @@ exports.getTaskList = async (req, res) => {
 
 exports.addSublist = async (req, res) => {
     try {
-
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' ``});
-        }
-
+        const {email} = req.decoded;
         const { google_list_id, sublist_name } = req.body;
 
         // Fetch existing data from the 'googleUsers' table
-        let userData = await knex('googleUsers').where({ email: userEmail }).first();
+        let userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
@@ -182,7 +138,7 @@ exports.addSublist = async (req, res) => {
         };
 
         // Update the user data in the 'googleUsers' table
-        await knex('googleUsers').where({ email: userEmail }).update({ data: JSON.stringify(Udata) });
+        await knex('googleUsers').where({ email }).update({ data: JSON.stringify(Udata) });
 
         res.status(201).json({ message: 'Sublist added successfully', data: Udata });
     } catch (error) {
@@ -196,21 +152,10 @@ exports.getAllSublists = async (req, res) => {
 
     try {
         const { google_list_id } = req.query;
-
-        // Retrieve the user email from the cookie
-        // const userEmail = req.cookies.email; // Assuming the email is saved as a cookie called 'userEmail'
-
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-        console.log(userEmail);
-
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
+        const {email} = req.decoded;
 
         // Fetch the user's data from the 'googleUsers' table
-        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+        const userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
@@ -257,18 +202,11 @@ exports.getAllSublists = async (req, res) => {
 
 exports.addSublistSections = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-        
+        const {email} = req.decoded;
         const { google_list_id, subList_id, section_name } = req.body;
 
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
-
         // Fetch existing data from the 'googleUsers' table
-        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+        const userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
@@ -302,7 +240,7 @@ exports.addSublistSections = async (req, res) => {
         const updatedData = JSON.stringify(Udata);
 
         // Update the user data in the 'googleUsers' table (store as LONGTEXT)
-        await knex('googleUsers').where({ email: userEmail }).update({ data: updatedData });
+        await knex('googleUsers').where({ email }).update({ data: updatedData });
 
         // Return the success response with updated data
         res.status(201).json({ message: 'Section added successfully', data: Udata });
@@ -345,23 +283,17 @@ exports.getLists = async (req, res) => {
 
 exports.getSublistSections = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
+        const {email} = req.decoded;
 
         const { google_list_id, sublist_id } = req.query;
         
         // Validate input parameters
-        if (!userEmail || !google_list_id || !sublist_id) {
-            return res.status(400).json({ message: 'Missing required parameters: userEmail, google_list_id, and sublist_id are required' });
+        if (!email || !google_list_id || !sublist_id) {
+            return res.status(400).json({ message: 'Missing required parameters: email, google_list_id, and sublist_id are required' });
         }
 
-        console.log('Received request to get sections for user:', userEmail);
-        console.log('Google List ID:', google_list_id);
-        console.log('Sublist ID:', sublist_id);
-
         // Fetch user data from the database
-        let userData = await knex('googleUsers').where({ email: userEmail }).first();
+        let userData = await knex('googleUsers').where({ email }).first();
         
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found in the database' });
@@ -417,18 +349,11 @@ exports.getSublistSections = async (req, res) => {
 
 exports.addListSection = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-
+        const {email} = req.decoded;
         const { google_list_id, section_name } = req.body;
 
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
-
         // Retrieve user data
-        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+        const userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
@@ -460,7 +385,7 @@ exports.addListSection = async (req, res) => {
         };
 
         // Update the user data in the database
-        await knex('googleUsers').where({ email: userEmail }).update({ data: JSON.stringify(Udata) });
+        await knex('googleUsers').where({ email }).update({ data: JSON.stringify(Udata) });
 
         res.status(201).json({ message: 'Section added successfully', data: Udata });
     } catch (error) {
@@ -472,18 +397,11 @@ exports.addListSection = async (req, res) => {
 
 exports.getListSectionsByListId = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-
+        const {email} = req.decoded;
         const { google_list_id } = req.query;
 
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' });
-        }
-
         // Retrieve user data
-        const userData = await knex('googleUsers').where({ email: userEmail }).first();
+        const userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found' });
@@ -513,13 +431,6 @@ exports.getListSectionsByListId = async (req, res) => {
 
 exports.getTasksbyId = async (req, res) => {
     try {
-        const token = req.cookies.jwt;
-        const decoded = jwt.verify(token, 'secretsecret');
-        const userEmail = decoded.email;
-
-        if (!userEmail) {
-            return res.status(401).json({ message: 'User not authenticated' ``});
-        }
         const {google_list_id} = req.query
 
         const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
