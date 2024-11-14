@@ -1,288 +1,287 @@
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>TODO</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <link rel="stylesheet" href="stylesheets/style.css" />
-      <style>
-        .nav-item:focus-within .subnav {
-          max-height: 500px;
-          transition: max-height 0.5s ease-in;
-        }
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TODO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="stylesheets/style.css" />
+    <style>
+      .nav-item:focus-within .subnav {
+        max-height: 500px;
+        transition: max-height 0.5s ease-in;
+      }
 
-        .subnav {
-          max-height: 0;
-          overflow: hidden;
-          transition: max-height 0.5s ease-out;
-        }
-      </style>
-    </head>
+      .subnav {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease-out;
+      }
+    </style>
+  </head>
 
-    <body>
-      <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar -->
-        <div class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center">
-              <div
-                class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold"
-              >
-                A
-              </div>
-              <span onclick="goBack()" class="ml-2 font-semibold cursor-pointer"
-                >Admin</span
-              >
+  <body>
+    <div class="flex h-screen bg-gray-100">
+      <!-- Sidebar -->
+      <div class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center">
+            <div
+              class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold"
+            >
+              A
             </div>
+            <span onclick="goBack()" class="ml-2 font-semibold cursor-pointer"
+              >Admin</span
+            >
           </div>
+        </div>
 
-          <div class="mt-6">
-            <h3 class="font-semibold mb-2">My Projects</h3>
-            <nav class="w-full py-4">
-              <ul class="space-y-2">
-                <% if (baselists.length> 0) { %> <% baselists.forEach(list=> { %>
-                <li class="nav-item items-center py-1 px-4 rounded-md mb-2">
-                  <div class="flex items-center justify-between">
-                    <a
-                      href="#"
-                      class="block py-2 px-4 rounded flex items-center justify-between hover:bg-gray-100"
-                      onclick="addListSection('<%= list.id %>','<%= list.title %>')"
+        <div class="mt-6">
+          <h3 class="font-semibold mb-2">My Projects</h3>
+          <nav class="w-full py-4">
+            <ul class="space-y-2">
+              <% if (baselists.length> 0) { %> <% baselists.forEach(list=> { %>
+              <li class="nav-item items-center py-1 px-4 rounded-md mb-2">
+                <div class="flex items-center justify-between">
+                  <a
+                    href="#"
+                    class="block py-2 px-4 rounded flex items-center justify-between hover:bg-gray-100"
+                    onclick="addListSection('<%= list.id %>','<%= list.title %>')"
+                  >
+                    # <%= list.title %> <% if (basesublists.some(sublist=>
+                    sublist.google_list_id === list.id)) { %>
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      # <%= list.title %> <% if (basesublists.some(sublist=>
-                      sublist.google_list_id === list.id)) { %>
-                      <svg
-                        class="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
+                    <% } %>
+                  </a>
+                  <button onclick="openModal('<%= list.id %>')">
+                    <img src="/images/add.png" class="w-4 h-4" />
+                  </button>
+                </div>
+
+                <% if (basesublists.some(sublist=> sublist.google_list_id ===
+                list.id)) { %>
+                <ul class="subnav space-y-1">
+                  <% basesublists.filter(basesublist=>
+                  basesublist.google_list_id === list.id).forEach(basesublist =>
+                  { %> <% basesublist.sublists.forEach(sublist=> { %>
+                  <li>
+                    <div class="flex items-center justify-between">
+                      <a
+                        href="#"
+                        onclick="openSection('<%= sublist.sublist_id %>','<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
+                        class="block py-2 px-4 rounded"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                      <% } %>
-                    </a>
-                    <button onclick="openModal('<%= list.id %>')">
-                      <img src="/images/add.png" class="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <% if (basesublists.some(sublist=> sublist.google_list_id ===
-                  list.id)) { %>
-                  <ul class="subnav space-y-1">
-                    <% basesublists.filter(basesublist=>
-                    basesublist.google_list_id === list.id).forEach(basesublist =>
-                    { %> <% basesublist.sublists.forEach(sublist=> { %>
-                    <li>
-                      <div class="flex items-center justify-between">
-                        <a
-                          href="#"
-                          onclick="openSection('<%= sublist.sublist_id %>','<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
-                          class="block py-2 px-4 rounded"
-                        >
-                          <%=sublist.sublist_name %>
-                        </a>
-                        <form
-                          action="/dashboard/delete/<%= basesublist.google_list_id %>"
-                          method="POST"
-                          style="display: inline"
-                        >
-                          <button type="submit">
-                            <img
-                              title="Delete"
-                              src="/images/minus.png"
-                              class="w-4 h-4"
-                            />
-                          </button>
-                        </form>
-                      </div>
-                    </li>
-                    <% }); %> <% }) %>
-                  </ul>
-                  <% } %>
-                </li>
-                <% }) %> <% } else { %>
-                <p>No lists available.</p>
+                        <%=sublist.sublist_name %>
+                      </a>
+                      <form
+                        action="/dashboard/delete/<%= basesublist.google_list_id %>"
+                        method="POST"
+                        style="display: inline"
+                      >
+                        <button type="submit">
+                          <img
+                            title="Delete"
+                            src="/images/minus.png"
+                            class="w-4 h-4"
+                          />
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                  <% }); %> <% }) %>
+                </ul>
                 <% } %>
-              </ul>
-            </nav>
-          </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="flex-1 p-8" id="main-content">
-          <h1 class="text-3xl font-bold mb-4">Today</h1>
-          <p class="text-gray-600 mb-6">3 tasks</p>
-
-          <!-- Task Sections -->
-          <div class="bg-white rounded-lg shadow p-6 mb-6">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-lg font-semibold">Overdue</h2>
-              <button class="text-red-500 text-sm">Reschedule</button>
-            </div>
-
-            <ul>
-              <li class="mb-3">
-                <label class="flex items-start">
-                  <input type="checkbox" class="mt-1 mr-3" />
-                  <span>
-                    <span class="font-medium"
-                      >Download Todoist on all your devices and email for 📱, 💻,
-                      🖥️, and 📧</span
-                    >
-                    <br />
-                    <span class="text-sm text-red-500">28 Aug</span>
-                  </span>
-                </label>
               </li>
-              <li class="mb-3">
-                <label class="flex items-start">
-                  <input type="checkbox" class="mt-1 mr-3" />
-                  <span>
-                    <span class="font-medium"
-                      >Take the productivity method quiz</span
-                    >
-                    <br />
-                    <span class="text-sm text-gray-500"
-                      >Get a personalized recommendation from Todoist</span
-                    >
-                    <br />
-                    <span class="text-sm text-red-500">Yesterday</span>
-                  </span>
-                </label>
-              </li>
+              <% }) %> <% } else { %>
+              <p>No lists available.</p>
+              <% } %>
             </ul>
-          </div>
-
-          <!-- Today's Tasks -->
-          <div class="bg-white rounded-lg shadow p-6">
-            <h2 class="text-lg font-semibold mb-4">30 Aug · Today · Friday</h2>
-            <ul>
-              <li class="mb-3">
-                <label class="flex items-start">
-                  <input type="checkbox" class="mt-1 mr-3" />
-                  <span>
-                    <span class="font-medium"
-                      >Browse the Todoist Inspiration Hub</span
-                    >
-                    <br />
-                    <span class="text-sm text-gray-500"
-                      >For productivity advice and to sign up for our
-                      newsletter</span
-                    >
-                  </span>
-                </label>
-              </li>
-            </ul>
-          </div>
+          </nav>
         </div>
       </div>
 
-      <!-- baselist Modal -->
-      <div
-        id="modal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
-      >
-        <div
-          class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-        >
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
-            Create Sub List
-          </h3>
-          <form id="createListForm">
-            <input
-              type="hidden"
-              id="listId"
-              name="listId"
-              required
-              class="mt-2 p-2 w-full border rounded"
-            />
-            <input
-              type="text"
-              id="listName"
-              name="listName"
-              required
-              class="mt-2 p-2 w-full border rounded"
-              placeholder="Enter list name"
-            />
-            <div class="mt-4">
-              <button
-                type="submit"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onclick="closeModal()"
-                class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+      <!-- Main Content -->
+      <div class="flex-1 p-8" id="main-content">
+        <h1 class="text-3xl font-bold mb-4">Today</h1>
+        <p class="text-gray-600 mb-6">3 tasks</p>
+
+        <!-- Task Sections -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">Overdue</h2>
+            <button class="text-red-500 text-sm">Reschedule</button>
+          </div>
+
+          <ul>
+            <li class="mb-3">
+              <label class="flex items-start">
+                <input type="checkbox" class="mt-1 mr-3" />
+                <span>
+                  <span class="font-medium"
+                    >Download Todoist on all your devices and email for 📱, 💻,
+                    🖥️, and 📧</span
+                  >
+                  <br />
+                  <span class="text-sm text-red-500">28 Aug</span>
+                </span>
+              </label>
+            </li>
+            <li class="mb-3">
+              <label class="flex items-start">
+                <input type="checkbox" class="mt-1 mr-3" />
+                <span>
+                  <span class="font-medium"
+                    >Take the productivity method quiz</span
+                  >
+                  <br />
+                  <span class="text-sm text-gray-500"
+                    >Get a personalized recommendation from Todoist</span
+                  >
+                  <br />
+                  <span class="text-sm text-red-500">Yesterday</span>
+                </span>
+              </label>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Today's Tasks -->
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-lg font-semibold mb-4">30 Aug · Today · Friday</h2>
+          <ul>
+            <li class="mb-3">
+              <label class="flex items-start">
+                <input type="checkbox" class="mt-1 mr-3" />
+                <span>
+                  <span class="font-medium"
+                    >Browse the Todoist Inspiration Hub</span
+                  >
+                  <br />
+                  <span class="text-sm text-gray-500"
+                    >For productivity advice and to sign up for our
+                    newsletter</span
+                  >
+                </span>
+              </label>
+            </li>
+          </ul>
         </div>
       </div>
-      <!-- section modal -->
+    </div>
+
+    <!-- baselist Modal -->
+    <div
+      id="modal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
+    >
       <div
-        id="sectionModal"
-        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
+        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
       >
-        <div
-          class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-        >
-          <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
-            Add Section
-          </h3>
-          <form id="addSection">
-            <input
-              type="hidden"
-              id="sectionId"
-              name="sectionId"
-              required
-              class="mt-2 p-2 w-full border rounded"
-            />
-            <input
-              type="hidden"
-              id="baseListId"
-              name="baseListId"
-              required
-              class="mt-2 p-2 w-full border rounded"
-            />
-            <input
-              type="text"
-              id="sectionName"
-              name="sectionName"
-              required
-              class="mt-2 p-2 w-full border rounded"
-              placeholder="Enter list name"
-            />
-            <div class="mt-4">
-              <button
-                type="submit"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onclick="closeSectionModal()"
-                class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-          
-        </div>
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
+          Create Sub List
+        </h3>
+        <form id="createListForm">
+          <input
+            type="hidden"
+            id="listId"
+            name="listId"
+            required
+            class="mt-2 p-2 w-full border rounded"
+          />
+          <input
+            type="text"
+            id="listName"
+            name="listName"
+            required
+            class="mt-2 p-2 w-full border rounded"
+            placeholder="Enter list name"
+          />
+          <div class="mt-4">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onclick="closeModal()"
+              class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
-  <!-- List sectionModal -->
+    </div>
+    <!-- section modal -->
+    <div
+      id="sectionModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
+    >
       <div
+        class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+      >
+        <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
+          Add Section
+        </h3>
+        <form id="addSection">
+          <input
+            type="hidden"
+            id="sectionId"
+            name="sectionId"
+            required
+            class="mt-2 p-2 w-full border rounded"
+          />
+          <input
+            type="hidden"
+            id="baseListId"
+            name="baseListId"
+            required
+            class="mt-2 p-2 w-full border rounded"
+          />
+          <input
+            type="text"
+            id="sectionName"
+            name="sectionName"
+            required
+            class="mt-2 p-2 w-full border rounded"
+            placeholder="Enter list name"
+          />
+          <div class="mt-4">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onclick="closeSectionModal()"
+              class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- List sectionModal -->
+    <div
       id="listSectionModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
     >
@@ -293,63 +292,68 @@
           Add Section
         </h3>
         <form id="addListSection">
-            <input
-              type="hidden"
-              id="sectionId"
-              name="sectionId"
-              required
-              class="mt-2 p-2 w-full border rounded"
-            />
-            <input
-              type="hidden"
-              id="listBaseListId"
-              name="listBaseListId"
-              required
-              class="mt-2 p-2 w-full border rounded"
-            />
-            <input
-              type="text"
-              id="listSectionName"
-              name="listSectionName"
-              required
-              class="mt-2 p-2 w-full border rounded"
-              placeholder="Enter list name"
-            />
-            <div class="mt-4">
-              <button
-                type="submit"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              >
-                Create
-              </button>
-              <button
-                type="button"
-                onclick="closeSectionModal()"
-                class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
+          <input
+            type="hidden"
+            id="sectionId"
+            name="sectionId"
+            required
+            class="mt-2 p-2 w-full border rounded"
+          />
+          <input
+            type="hidden"
+            id="listBaseListId"
+            name="listBaseListId"
+            required
+            class="mt-2 p-2 w-full border rounded"
+          />
+          <input
+            type="text"
+            id="listSectionName"
+            name="listSectionName"
+            required
+            class="mt-2 p-2 w-full border rounded"
+            placeholder="Enter list name"
+          />
+          <div class="mt-4">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onclick="closeSectionModal()"
+              class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
-      <script>
-        function openSection(sublistId, baselistId,sublistTitle,listTitle) {
-          const mainContent = document.getElementById("main-content");
-          // const [sublistId, baselistId] = ids.split(",");
-      fetch(`/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          // Assuming `data.sections` contains an array of sections from the API
-          let sectionsHTML = data.sections.map((section) => `
+    <script>
+      function openSection(sublistId, baselistId, sublistTitle, listTitle) {
+        const mainContent = document.getElementById("main-content");
+        // const [sublistId, baselistId] = ids.split(",");
+        fetch(
+          `/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            // Assuming `data.sections` contains an array of sections from the API
+            let sectionsHTML = data.sections
+              .map(
+                (section) => `
           <div class="section-item mt-4 text-black  p-2 text-center">
                       ${section.section_name}
                   </div>
-              `).join("");
+              `
+              )
+              .join("");
 
-
-          mainContent.innerHTML = `
+            mainContent.innerHTML = `
           <h2 class="font-semibold">${listTitle} / ${sublistTitle}</h2>
           <button onclick="openSectionModal('${sublistId},${baselistId}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
              <div class="flex flex-wrap">
@@ -358,351 +362,468 @@
                   <div id="sublist-container"></div>
                   
       `;
-      const storedData = localStorage.getItem(`apiData_${baselistId}`);
+            const storedData = localStorage.getItem(`apiData_${baselistId}`);
 
-      if (storedData) {
-        displayLocalData(JSON.parse(storedData));
+            if (storedData) {
+              displayLocalData(JSON.parse(storedData));
+            }
+          })
+          .catch((error) => console.error("Error fetching sections:", error));
       }
-      }).catch((error) => console.error("Error fetching sections:", error));
-      }
-        
-        function addListSection(id,title){
-          const mainContent = document.getElementById("main-content");
-          //  Call the GET API to fetch section data
-          
-      fetch(`/tasks/listSection?google_list_id=${id}`)
-        .then((response) => response.json())
-        .then((data) => {
-          // Assuming `data.sections` contains an array of sections from the API
-          let sectionsHTML = data?.sections?.map((section) => `
-           <div class="mt-4 text-black p-2">
-                      ${section?.section_name}
-                  </div>
-              `).join("");
+     var title;
+      function addListSection(id, title) {
+        const mainContent = document.getElementById("main-content");
+        //  Call the GET API to fetch section data
+
+        fetch(`/tasks/listSection?google_list_id=${id}`)
+          .then((response) => response.json())
+          .then((data) => {
+            // Assuming `data.sections` contains an array of sections from the API
+            let sectionsHTML = "";
+            title = title
 
 
-          mainContent.innerHTML = `
+            const storedData = localStorage.getItem(`apiData_${id}`);
+            if (!storedData) {
+              sectionsHTML = data?.sections
+                ?.map(
+                  (section) =>
+                    `<div class="section-item">${section.section_name}</div>`
+                )
+                .join("");
+            }
+            const sections = data?.sections?.map(
+              (section) => section?.section_name
+            );
+            mainContent.innerHTML = `
           <h2 class="font-semibold">${title}</h2>
           <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
-          <button onclick="fetchAndDisplayData('${id}')"   class="px-4 text-[12px] font-semibold text-black border border-black rounded">REFRESH</button>
-           <div class="flex flex-wrap">
+          <button onclick="fetchAndDisplayData('${id}','${title}')"   class="px-4 text-[12px] font-semibold text-black border border-black rounded">REFRESH</button>
+          <div class="flex flex-wrap gap-10">
                    ${sectionsHTML}
                 </div>
         
                   <div id="data-container"></div>
         
       `;
-      const storedData = localStorage.getItem(`apiData_${id}`);
-
-      if (storedData) {
-        displayData(JSON.parse(storedData));
-      }
-        }).catch((error) => console.error("Error fetching sections:", error));
-      }
-
-        function addNewItem(listId) {
-          // Open a form modal or navigate to an "Add New Item" page
-          alert(`Adding a new item for list ID: ${listId}`);
-          // For example, you could navigate to: window.location.href = `/add-item?listId=${listId}`;
-        }
-        const originalContent = document.getElementById("main-content").innerHTML;
-
-        function goBack() {
-          const mainContent = document.getElementById("main-content");
-          mainContent.innerHTML = originalContent;
-        }
-        function openModal(id) {
-          document.getElementById("modal").classList.remove("hidden");
-          document.getElementById("listId").value = id;
-        }
-
-        function closeModal() {
-          document.getElementById("modal").classList.add("hidden");
-          document.getElementById("sectionId").value = "";
-        }
-
-        function openSectionModal(ids) {
-          const [sublistId, baselistId] = ids.split(",");
-          document.getElementById("sectionModal").classList.remove("hidden");
-          document.getElementById("sectionId").value = sublistId;
-          document.getElementById("baseListId").value = baselistId;
-        }
-
-        function openListSectionModal(id) {
-          
-          document.getElementById("listSectionModal").classList.remove("hidden");
-          // document.getElementById("sectionId").value = sublistId;
-          document.getElementById("listBaseListId").value = id;
-        }
-        function fetchAndDisplayData(id) {
-          const storageKey = `apiData_${id}`;
-
-          localStorage.removeItem(storageKey);
-            fetch(`/tasks/googleTasks?google_list_id=${id}`)
-              .then(response => response.json())
-              .then(data => {
-                localStorage.setItem(storageKey, JSON.stringify(data));
-                displayData(data);
-              })
-              .catch(error => console.error("Error fetching data:", error));
-        }
-
-        function displayData(data) {
-  const container = document.getElementById("data-container");
-  container.innerHTML = "";
-
-  if (data && Array.isArray(data.data)) {
-    // Filter out tasks with "s-" in the title
-    const filteredData = data.data.filter(task => !task.title.includes('s-'));
-
-    const sections = filteredData.reduce((acc, task) => {
-      const hashSplit = task.title.split('#');
-      let sectionName = "No Section";
-      let taskTitle = hashSplit[0].trim();
-      
-      // Check if there's a section name specified after '#'
-      if (hashSplit.length > 1) {
-        sectionName = hashSplit[1].trim();
+            if (storedData) {
+              displayData(JSON.parse(storedData), sections);
+            }
+          })
+          .catch((error) => console.error("Error fetching sections:", error));
       }
 
-      // Organize tasks by section
-      if (!acc[sectionName]) {
-        acc[sectionName] = [];
+      function addNewItem(listId) {
+        // Open a form modal or navigate to an "Add New Item" page
+        alert(`Adding a new item for list ID: ${listId}`);
+        // For example, you could navigate to: window.location.href = `/add-item?listId=${listId}`;
       }
-      acc[sectionName].push({ ...task, title: taskTitle });
-      return acc;
-    }, {});
+      const originalContent = document.getElementById("main-content").innerHTML;
 
-    const sectionRow = document.createElement("div");
-    sectionRow.classList.add("flex", "flex-wrap", "gap-4");
-
-    Object.keys(sections).forEach(sectionName => {
-      const sectionContainer = document.createElement("div");
-      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
-
-      const sectionHeader = document.createElement("p");
-      sectionHeader.textContent = sectionName;
-      sectionHeader.classList.add("mb-4");
-
-      if (sectionName === "No Section") {
-        sectionHeader.classList.add("text-red-500");
+      function goBack() {
+        const mainContent = document.getElementById("main-content");
+        mainContent.innerHTML = originalContent;
+      }
+      function openModal(id) {
+        document.getElementById("modal").classList.remove("hidden");
+        document.getElementById("listId").value = id;
       }
 
-      const taskContainer = document.createElement("div");
-      taskContainer.classList.add("flex", "flex-col");
+      function closeModal() {
+        document.getElementById("modal").classList.add("hidden");
+        document.getElementById("sectionId").value = "";
+      }
 
-      sections[sectionName].forEach(task => {
-        const dueDate = task.due ? new Date(task.due) : null;
-        const formattedDate = dueDate ? 
-          `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
+      function openSectionModal(ids) {
+        const [sublistId, baselistId] = ids.split(",");
+        document.getElementById("sectionModal").classList.remove("hidden");
+        document.getElementById("sectionId").value = sublistId;
+        document.getElementById("baseListId").value = baselistId;
+      }
 
-        const taskCard = document.createElement("div");
-        taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
+      function openListSectionModal(id) {
+        document.getElementById("listSectionModal").classList.remove("hidden");
+        // document.getElementById("sectionId").value = sublistId;
+        document.getElementById("listBaseListId").value = id;
+      }
+      function fetchAndDisplayData(id,title) {
+        const storageKey = `apiData_${id}`;
 
-        let taskCardHTML = `
-          ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
-          ${sectionName !== "No Section" ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>` : ""}
-          ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
-        `;
+        localStorage.removeItem(storageKey);
+        fetch(`/tasks/googleTasks?google_list_id=${id}`)
+          .then((response) => response.json())
+          .then((data) => {
+            localStorage.setItem(storageKey, JSON.stringify(data));
+            addListSection(id, title); 
+            displayData(data);
+          })
+          .catch((error) => console.error("Error fetching data:", error));
+      }
 
-        taskCard.innerHTML = taskCardHTML;
-        taskContainer.appendChild(taskCard);
-      });
+      function displayData(data, sectionsArray) {
+    const container = document.getElementById("data-container");
+    container.innerHTML = "";
 
-      sectionContainer.appendChild(sectionHeader);
-      sectionContainer.appendChild(taskContainer);
-      sectionRow.appendChild(sectionContainer);
-    });
+    if (data && Array.isArray(data.data)) {
+        const filteredData = data.data.filter(
+            (task) => !task.title.includes("s-")
+        );
 
-    container.appendChild(sectionRow);
-  } else {
-    console.error("Data is missing or not in expected format.");
-    container.innerHTML = '<div class="text-red-500">No sections available to display.</div>';
-  }
+        const sections = filteredData.reduce((acc, task) => {
+            const hashSplit = task.title.split("#");
+            let sectionName = "No Section";
+            let taskTitle = hashSplit[0].trim();
+
+            // Handle section extraction
+            if (hashSplit.length > 1) {
+                sectionName = hashSplit[1].trim();
+            }
+
+            // Add task to corresponding section
+            if (!acc[sectionName]) {
+                acc[sectionName] = [];
+            }
+            acc[sectionName].push({ ...task, title: taskTitle });
+            return acc;
+        }, {});
+
+        const sectionRow = document.createElement("div");
+        sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+
+        sectionsArray.forEach((sectionName) => {
+            const sectionContainer = document.createElement("div");
+            sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
+
+            const sectionHeader = document.createElement("p");
+            sectionHeader.textContent = sectionName;
+            sectionHeader.classList.add("mb-4");
+
+            const taskContainer = document.createElement("div");
+            taskContainer.classList.add("flex", "flex-col");
+
+            if (sections[sectionName]) {
+                sections[sectionName].forEach((task) => {
+                    const dueDate = task.due ? new Date(task.due) : null;
+                    const formattedDate = dueDate
+                        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+                            dueDate.getMonth() + 1
+                        ).padStart(2, "0")}.${dueDate.getFullYear()}`
+                        : null;
+
+                    const taskCard = document.createElement("div");
+                    taskCard.classList.add(
+                        "bg-white",
+                        "p-4",
+                        "rounded-lg",
+                        "shadow-sm",
+                        "flex",
+                        "flex-col",
+                        "items-center",
+                        "text-center",
+                        "mb-2"
+                    );
+
+                    let taskCardHTML = `
+                        ${
+                            task.title
+                                ? `<p class="text-md font-medium">${task.title}</p>`
+                                : ""
+                        }
+                        ${
+                            sectionName !== "No Section"
+                                ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>`
+                                : ""
+                        }
+                        ${
+                            formattedDate
+                                ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+                                : ""
+                        }
+                    `;
+
+                    taskCard.innerHTML = taskCardHTML;
+                    taskContainer.appendChild(taskCard);
+                });
+            } else {
+                taskContainer.innerHTML =
+                    '<p class="text-gray-400">No tasks available</p>';
+            }
+
+            sectionContainer.appendChild(sectionHeader);
+            sectionContainer.appendChild(taskContainer);
+            sectionRow.appendChild(sectionContainer);
+        });
+
+        // Display 'No Section' if available
+        if (sections["No Section"] && sections["No Section"].length > 0) {
+            const noSectionContainer = document.createElement("div");
+            noSectionContainer.classList.add(
+                "bg-gray-100",
+                "p-4",
+                "rounded-lg"
+            );
+
+            const noSectionHeader = document.createElement("p");
+            noSectionHeader.textContent = "No Section";
+            noSectionHeader.classList.add("text-red-500", "mb-4");
+
+            const noSectionTaskContainer = document.createElement("div");
+            noSectionTaskContainer.classList.add("flex", "flex-col");
+
+            sections["No Section"].forEach((task) => {
+    const dueDate = task.due ? new Date(task.due) : null;
+    const formattedDate = dueDate
+        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+            dueDate.getMonth() + 1
+        ).padStart(2, "0")}.${dueDate.getFullYear()}`
+        : "";
+
+    const taskCard = document.createElement("div");
+    taskCard.classList.add(
+        "bg-white",
+        "p-4",
+        "rounded-lg",
+        "shadow-sm",
+        "flex",
+        "flex-col",
+        "items-center",
+        "text-center",
+        "mb-2"
+    );
+
+    const taskCardHTML = `
+        <p class="text-md font-medium">${task.title}</p>
+        ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
+    `;
+
+    taskCard.innerHTML = taskCardHTML;
+    noSectionTaskContainer.appendChild(taskCard);
+});
+
+
+            noSectionContainer.appendChild(noSectionHeader);
+            noSectionContainer.appendChild(noSectionTaskContainer);
+            sectionRow.appendChild(noSectionContainer);
+        }
+
+        container.appendChild(sectionRow);
+    } else {
+        console.error("Data is missing or not in expected format.");
+        container.innerHTML =
+            '<div class="text-red-500">No sections available to display.</div>';
+    }
 }
 
-function displayLocalData(localData) {
-  console.log(localData, "===============");
-  const mainContent = document.getElementById("sublist-container");
-  mainContent.innerHTML = "";  // Clear existing content
+      function displayLocalData(localData) {
+        const mainContent = document.getElementById("sublist-container");
+        mainContent.innerHTML = ""; // Clear existing content
 
-  if (localData && Array.isArray(localData.data)) {
-    // Filter tasks to include only those with "-s" in the title
-    const filteredData = localData.data.filter(task => task.title.includes('s-'));
+        if (localData && Array.isArray(localData.data)) {
+          // Filter tasks to include only those with "-s" in the title
+          const filteredData = localData.data.filter((task) =>
+            task.title.includes("s-")
+          );
 
-    // Group tasks based on the presence of "#"
-    const sections = filteredData.reduce((acc, task) => {
-      const hashSplit = task.title.split('#');
-      const sSplit = hashSplit[0].split('s-');
-      let sectionName = "No Section";  // Default section name
-      let taskTitle = sSplit[0].trim();  // Main task title
-      let sublistName = sSplit[1] ? sSplit[1].trim() : null;  // Sublist name from "-s"
-      let hashName = hashSplit[1] ? hashSplit[1].trim() : null;  // Name from "#"
+          // Group tasks based on the presence of "#"
+          const sections = filteredData.reduce((acc, task) => {
+            const hashSplit = task.title.split("#");
+            const sSplit = hashSplit[0].split("s-");
+            let sectionName = "No Section"; // Default section name
+            let taskTitle = sSplit[0].trim(); // Main task title
+            let sublistName = sSplit[1] ? sSplit[1].trim() : null; // Sublist name from "-s"
+            let hashName = hashSplit[1] ? hashSplit[1].trim() : null; // Name from "#"
 
-      // Determine section name based on "#" existence
-      if (hashName) {
-        sectionName = hashName;
-      }
+            // Determine section name based on "#" existence
+            if (hashName) {
+              sectionName = hashName;
+            }
 
-      // Organize tasks by section name
-      if (!acc[sectionName]) {
-        acc[sectionName] = [];
-      }
-      acc[sectionName].push({
-        ...task,
-        title: taskTitle,
-        sublist: sublistName,
-        hashName: hashName
-      });
-      return acc;
-    }, {});
+            // Organize tasks by section name
+            if (!acc[sectionName]) {
+              acc[sectionName] = [];
+            }
+            acc[sectionName].push({
+              ...task,
+              title: taskTitle,
+              sublist: sublistName,
+              hashName: hashName,
+            });
+            return acc;
+          }, {});
 
-    // Create the sections and tasks layout
-    const sectionRow = document.createElement("div");
-    sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+          // Create the sections and tasks layout
+          const sectionRow = document.createElement("div");
+          sectionRow.classList.add("flex", "flex-wrap", "gap-4");
 
-    Object.keys(sections).forEach(sectionName => {
-      // Container for each section
-      const sectionContainer = document.createElement("div");
-      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
+          Object.keys(sections).forEach((sectionName) => {
+            // Container for each section
+            const sectionContainer = document.createElement("div");
+            sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
 
-      // Section header
-      const sectionHeader = document.createElement("p");
-      sectionHeader.textContent = sectionName;
-      sectionHeader.classList.add("mb-4");
-      if (sectionName === "No Section") {
-        sectionHeader.classList.add("text-red-500");
-      }
+            // Section header
+            const sectionHeader = document.createElement("p");
+            sectionHeader.textContent = sectionName;
+            sectionHeader.classList.add("mb-4");
+            if (sectionName === "No Section") {
+              sectionHeader.classList.add("text-red-500");
+            }
 
-      // Container for tasks in each section
-      const taskContainer = document.createElement("div");
-      taskContainer.classList.add("flex", "flex-col");
+            // Container for tasks in each section
+            const taskContainer = document.createElement("div");
+            taskContainer.classList.add("flex", "flex-col");
 
-      sections[sectionName].forEach(task => {
-        const dueDate = task.due ? new Date(task.due) : null;
-        const formattedDate = dueDate ? 
-          `${String(dueDate.getDate()).padStart(2, '0')}.${String(dueDate.getMonth() + 1).padStart(2, '0')}.${dueDate.getFullYear()}` : null;
+            sections[sectionName].forEach((task) => {
+              const dueDate = task.due ? new Date(task.due) : null;
+              const formattedDate = dueDate
+                ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+                    dueDate.getMonth() + 1
+                  ).padStart(2, "0")}.${dueDate.getFullYear()}`
+                : null;
 
-        // Task card layout
-        const taskCard = document.createElement("div");
-        taskCard.classList.add("bg-white", "p-4", "rounded-lg", "shadow-sm", "flex", "flex-col", "items-center", "text-center", "mb-2");
+              // Task card layout
+              const taskCard = document.createElement("div");
+              taskCard.classList.add(
+                "bg-white",
+                "p-4",
+                "rounded-lg",
+                "shadow-sm",
+                "flex",
+                "flex-col",
+                "items-center",
+                "text-center",
+                "mb-2"
+              );
 
-        // Display four fields if both "-s" and "#" exist; otherwise, display three fields
-        let taskCardHTML = `
-          ${task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""}
-          ${task.sublist ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>` : ""}
-          ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
-          ${task.hashName ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>` : ""}
+              // Display four fields if both "-s" and "#" exist; otherwise, display three fields
+              let taskCardHTML = `
+          ${
+            task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""
+          }
+          ${
+            task.sublist
+              ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>`
+              : ""
+          }
+          ${
+            formattedDate
+              ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+              : ""
+          }
+          ${
+            task.hashName
+              ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>`
+              : ""
+          }
         `;
 
-        taskCard.innerHTML = taskCardHTML;
-        taskContainer.appendChild(taskCard);
-      });
+              taskCard.innerHTML = taskCardHTML;
+              taskContainer.appendChild(taskCard);
+            });
 
-      sectionContainer.appendChild(sectionHeader);
-      sectionContainer.appendChild(taskContainer);
-      sectionRow.appendChild(sectionContainer);
-    });
+            sectionContainer.appendChild(sectionHeader);
+            sectionContainer.appendChild(taskContainer);
+            sectionRow.appendChild(sectionContainer);
+          });
 
-    mainContent.appendChild(sectionRow);
-  } else {
-    console.error("Local data is missing or not in expected format.");
-    mainContent.innerHTML = '<div class="text-red-500">No sections available to display.</div>';
-  }
-}
+          mainContent.appendChild(sectionRow);
+        } else {
+          console.error("Local data is missing or not in expected format.");
+          mainContent.innerHTML =
+            '<div class="text-red-500">No sections available to display.</div>';
+        }
+      }
 
-        function closeSectionModal() {
-                document.getElementById("sectionModal").classList.add("hidden");
-                document.getElementById("listSectionModal").classList.add("hidden");
-                document.getElementById("listId").value = "";
+      function closeSectionModal() {
+        document.getElementById("sectionModal").classList.add("hidden");
+        document.getElementById("listSectionModal").classList.add("hidden");
+        document.getElementById("listId").value = "";
+      }
+
+      document
+        .getElementById("createListForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const sublist_name = document.getElementById("listName").value;
+          const google_list_id = document.getElementById("listId").value;
+
+          fetch("/tasks/add/subList", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ sublist_name, google_list_id }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "Sublist added successfully") {
+                // window.location.href = `/tasks/list`;
+                window.location.reload();
+                closeModal();
               }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+      document
+        .getElementById("addSection")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const section_name = document.getElementById("sectionName").value;
+          const google_list_id = document.getElementById("baseListId").value;
+          const subList_id = document.getElementById("sectionId").value;
+          fetch("/tasks/add/sublist/section", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ section_name, google_list_id, subList_id }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "Section added successfully") {
+                // window.location.href = `/tasks/list`;
+                openSection(`${subList_id},${google_list_id}`);
 
-              document
-                .getElementById("createListForm")
-                .addEventListener("submit", function (e) {
-                  e.preventDefault();
-                  const sublist_name = document.getElementById("listName").value;
-                  const google_list_id = document.getElementById("listId").value;
+                // window.location.reload();
+                closeSectionModal();
+              }
+              closeSectionModal();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
 
-                  fetch("/tasks/add/subList", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ sublist_name, google_list_id }),
-                  })
-                    .then((response) => response.json())
-                    .then((data) => {
-                      if (data.message === "Sublist added successfully") {
-                        // window.location.href = `/tasks/list`;
-                        window.location.reload();
-                        closeModal();
-                      }
-                    })
-                    .catch((error) => {
-                      console.error("Error:", error);
-                    });
-                });
-              document
-                .getElementById("addSection")
-                .addEventListener("submit", function (e) {
-                  e.preventDefault();
-                  const section_name = document.getElementById("sectionName").value;
-                  const google_list_id = document.getElementById("baseListId").value;
-                  const subList_id = document.getElementById("sectionId").value;
+      document
+        .getElementById("addListSection")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const section_name = document.getElementById("listSectionName").value;
+          const google_list_id =
+            document.getElementById("listBaseListId").value;
 
-                  fetch("/tasks/add/sublist/section", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ section_name, google_list_id,subList_id }),
-                  })
-                    .then((response) => response.json())
-                    .then((data) => {
-                      if (data.message === "Section added successfully") {
-                        // window.location.href = `/tasks/list`;
-                        openSection(`${subList_id},${google_list_id}`)
-                        
-                        // window.location.reload();
-                        closeSectionModal();
-                      }
-                      closeSectionModal();
-                    })
-                    .catch((error) => {
-                      console.error("Error:", error);
-                    });
-                });
-              
-                document
-                .getElementById("addListSection")
-                .addEventListener("submit", function (e) {
-                  e.preventDefault();
-                  const section_name = document.getElementById("listSectionName").value;
-                  const google_list_id = document.getElementById("listBaseListId").value;
-
-                  fetch("/tasks/add/listSection", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ section_name, google_list_id }),
-                  })
-                    .then((response) => response.json())
-                    .then((data) => {
-                      if (data.message === "Section added successfully") {
-                        // window.location.href = `/tasks/list`;
-                        addListSection(`${google_list_id}`)
-                        // window.location.reload();
-                        closeSectionModal();
-                      }
-                      closeSectionModal();
-                    })
-                    .catch((error) => {
-                      console.error("Error:", error);
-                    });
-                });
-
-      </script>
-    </body>
-  </html>
+          fetch("/tasks/add/listSection", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ section_name, google_list_id }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "Section added successfully") {
+                // window.location.href = `/tasks/list`;
+                addListSection(`${google_list_id}`);
+                // window.location.reload();
+                closeSectionModal();
+              }
+              closeSectionModal();
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+    </script>
+  </body>
+</html>
