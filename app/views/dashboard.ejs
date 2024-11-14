@@ -82,7 +82,7 @@
                     <div class="flex items-center justify-between">
                       <a
                         href="#"
-                        onclick="openSection('<%= sublist.sublist_id %>','<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
+                        onclick="openSection('<%= sublist.sublist_id %>,<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
                         class="block py-2 px-4 rounded"
                       >
                         <%=sublist.sublist_name %>
@@ -334,27 +334,35 @@
     </div>
 
     <script>
-      function openSection(sublistId, baselistId, sublistTitle, listTitle) {
+      function openSection(ids, sublistTitle, listTitle) {
+        localStorage.setItem("currentsubtitle",sublistTitle)
+        localStorage.setItem("currentlisttitle",listTitle)
         const mainContent = document.getElementById("main-content");
-        // const [sublistId, baselistId] = ids.split(",");
+        const [sublistId, baselistId] = ids.split(",");
         fetch(
           `/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`
         )
           .then((response) => response.json())
           .then((data) => {
             // Assuming `data.sections` contains an array of sections from the API
-            let sectionsHTML = data.sections
-              .map(
-                (section) => `
+            const storedData = localStorage.getItem(`apiData_${baselistId}`);
+            let sectionsHTML = "";
+            if (!storedData) {
+              sectionsHTML = data.sections
+                .map(
+                  (section) => `
           <div class="section-item mt-4 text-black  p-2 text-center">
                       ${section.section_name}
                   </div>
               `
-              )
-              .join("");
-
+                )
+                .join("");
+            }
+            let sections = data.sections.map((section) => section.section_name);
+            let sublistTitle=localStorage.getItem("currentsubtitle")
+            let listtitle=localStorage.getItem("currentlisttitle")
             mainContent.innerHTML = `
-          <h2 class="font-semibold">${listTitle} / ${sublistTitle}</h2>
+          <h2 class="font-semibold">${listtitle} / ${sublistTitle}</h2>
           <button onclick="openSectionModal('${sublistId},${baselistId}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
              <div class="flex flex-wrap">
                    ${sectionsHTML}
@@ -362,16 +370,15 @@
                   <div id="sublist-container"></div>
                   
       `;
-            const storedData = localStorage.getItem(`apiData_${baselistId}`);
 
             if (storedData) {
-              displayLocalData(JSON.parse(storedData));
+              displayLocalData(JSON.parse(storedData), sections);
             }
           })
           .catch((error) => console.error("Error fetching sections:", error));
       }
-     var title;
       function addListSection(id, title) {
+        localStorage.setItem("currentTitle", title);
         const mainContent = document.getElementById("main-content");
         //  Call the GET API to fetch section data
 
@@ -380,8 +387,7 @@
           .then((data) => {
             // Assuming `data.sections` contains an array of sections from the API
             let sectionsHTML = "";
-            title = title
-
+            title = title;
 
             const storedData = localStorage.getItem(`apiData_${id}`);
             if (!storedData) {
@@ -395,10 +401,13 @@
             const sections = data?.sections?.map(
               (section) => section?.section_name
             );
+            const listTitle=localStorage.getItem("currentTitle")
+            console.log(listTitle,"========listTitle");
+            
             mainContent.innerHTML = `
-          <h2 class="font-semibold">${title}</h2>
+          <h2 class="font-semibold">${listTitle}</h2>
           <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
-          <button onclick="fetchAndDisplayData('${id}','${title}')"   class="px-4 text-[12px] font-semibold text-black border border-black rounded">REFRESH</button>
+          <button onclick="fetchAndDisplayData('${id}','${listTitle}')"   class="px-4 text-[12px] font-semibold text-black border border-black rounded">REFRESH</button>
           <div class="flex flex-wrap gap-10">
                    ${sectionsHTML}
                 </div>
@@ -446,7 +455,7 @@
         // document.getElementById("sectionId").value = sublistId;
         document.getElementById("listBaseListId").value = id;
       }
-      function fetchAndDisplayData(id,title) {
+      function fetchAndDisplayData(id, title) {
         const storageKey = `apiData_${id}`;
 
         localStorage.removeItem(storageKey);
@@ -454,43 +463,43 @@
           .then((response) => response.json())
           .then((data) => {
             localStorage.setItem(storageKey, JSON.stringify(data));
-            addListSection(id, title); 
+            addListSection(id, title);
             displayData(data);
           })
           .catch((error) => console.error("Error fetching data:", error));
       }
 
       function displayData(data, sectionsArray) {
-    const container = document.getElementById("data-container");
-    container.innerHTML = "";
+        const container = document.getElementById("data-container");
+        container.innerHTML = "";
 
-    if (data && Array.isArray(data.data)) {
-        const filteredData = data.data.filter(
+        if (data && Array.isArray(data.data)) {
+          const filteredData = data.data.filter(
             (task) => !task.title.includes("s-")
-        );
+          );
 
-        const sections = filteredData.reduce((acc, task) => {
+          const sections = filteredData.reduce((acc, task) => {
             const hashSplit = task.title.split("#");
             let sectionName = "No Section";
             let taskTitle = hashSplit[0].trim();
 
             // Handle section extraction
             if (hashSplit.length > 1) {
-                sectionName = hashSplit[1].trim();
+              sectionName = hashSplit[1].trim();
             }
 
             // Add task to corresponding section
             if (!acc[sectionName]) {
-                acc[sectionName] = [];
+              acc[sectionName] = [];
             }
             acc[sectionName].push({ ...task, title: taskTitle });
             return acc;
-        }, {});
+          }, {});
 
-        const sectionRow = document.createElement("div");
-        sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+          const sectionRow = document.createElement("div");
+          sectionRow.classList.add("flex", "flex-wrap", "gap-4");
 
-        sectionsArray.forEach((sectionName) => {
+          sectionsArray.forEach((sectionName) => {
             const sectionContainer = document.createElement("div");
             sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
 
@@ -502,65 +511,65 @@
             taskContainer.classList.add("flex", "flex-col");
 
             if (sections[sectionName]) {
-                sections[sectionName].forEach((task) => {
-                    const dueDate = task.due ? new Date(task.due) : null;
-                    const formattedDate = dueDate
-                        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
-                            dueDate.getMonth() + 1
-                        ).padStart(2, "0")}.${dueDate.getFullYear()}`
-                        : null;
+              sections[sectionName].forEach((task) => {
+                const dueDate = task.due ? new Date(task.due) : null;
+                const formattedDate = dueDate
+                  ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+                      dueDate.getMonth() + 1
+                    ).padStart(2, "0")}.${dueDate.getFullYear()}`
+                  : null;
 
-                    const taskCard = document.createElement("div");
-                    taskCard.classList.add(
-                        "bg-white",
-                        "p-4",
-                        "rounded-lg",
-                        "shadow-sm",
-                        "flex",
-                        "flex-col",
-                        "items-center",
-                        "text-center",
-                        "mb-2"
-                    );
+                const taskCard = document.createElement("div");
+                taskCard.classList.add(
+                  "bg-white",
+                  "p-4",
+                  "rounded-lg",
+                  "shadow-sm",
+                  "flex",
+                  "flex-col",
+                  "items-center",
+                  "text-center",
+                  "mb-2"
+                );
 
-                    let taskCardHTML = `
+                let taskCardHTML = `
                         ${
-                            task.title
-                                ? `<p class="text-md font-medium">${task.title}</p>`
-                                : ""
+                          task.title
+                            ? `<p class="text-md font-medium">${task.title}</p>`
+                            : ""
                         }
                         ${
-                            sectionName !== "No Section"
-                                ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>`
-                                : ""
+                          sectionName !== "No Section"
+                            ? `<p class="text-sm text-gray-400 mt-1">#${sectionName}</p>`
+                            : ""
                         }
                         ${
-                            formattedDate
-                                ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
-                                : ""
+                          formattedDate
+                            ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+                            : ""
                         }
                     `;
 
-                    taskCard.innerHTML = taskCardHTML;
-                    taskContainer.appendChild(taskCard);
-                });
+                taskCard.innerHTML = taskCardHTML;
+                taskContainer.appendChild(taskCard);
+              });
             } else {
-                taskContainer.innerHTML =
-                    '<p class="text-gray-400">No tasks available</p>';
+              taskContainer.innerHTML =
+                '<p class="text-gray-400">No tasks available</p>';
             }
 
             sectionContainer.appendChild(sectionHeader);
             sectionContainer.appendChild(taskContainer);
             sectionRow.appendChild(sectionContainer);
-        });
+          });
 
-        // Display 'No Section' if available
-        if (sections["No Section"] && sections["No Section"].length > 0) {
+          // Display 'No Section' if available
+          if (sections["No Section"] && sections["No Section"].length > 0) {
             const noSectionContainer = document.createElement("div");
             noSectionContainer.classList.add(
-                "bg-gray-100",
-                "p-4",
-                "rounded-lg"
+              "bg-gray-100",
+              "p-4",
+              "rounded-lg"
             );
 
             const noSectionHeader = document.createElement("p");
@@ -571,116 +580,13 @@
             noSectionTaskContainer.classList.add("flex", "flex-col");
 
             sections["No Section"].forEach((task) => {
-    const dueDate = task.due ? new Date(task.due) : null;
-    const formattedDate = dueDate
-        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
-            dueDate.getMonth() + 1
-        ).padStart(2, "0")}.${dueDate.getFullYear()}`
-        : "";
-
-    const taskCard = document.createElement("div");
-    taskCard.classList.add(
-        "bg-white",
-        "p-4",
-        "rounded-lg",
-        "shadow-sm",
-        "flex",
-        "flex-col",
-        "items-center",
-        "text-center",
-        "mb-2"
-    );
-
-    const taskCardHTML = `
-        <p class="text-md font-medium">${task.title}</p>
-        ${formattedDate ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>` : ""}
-    `;
-
-    taskCard.innerHTML = taskCardHTML;
-    noSectionTaskContainer.appendChild(taskCard);
-});
-
-
-            noSectionContainer.appendChild(noSectionHeader);
-            noSectionContainer.appendChild(noSectionTaskContainer);
-            sectionRow.appendChild(noSectionContainer);
-        }
-
-        container.appendChild(sectionRow);
-    } else {
-        console.error("Data is missing or not in expected format.");
-        container.innerHTML =
-            '<div class="text-red-500">No sections available to display.</div>';
-    }
-}
-
-      function displayLocalData(localData) {
-        const mainContent = document.getElementById("sublist-container");
-        mainContent.innerHTML = ""; // Clear existing content
-
-        if (localData && Array.isArray(localData.data)) {
-          // Filter tasks to include only those with "-s" in the title
-          const filteredData = localData.data.filter((task) =>
-            task.title.includes("s-")
-          );
-
-          // Group tasks based on the presence of "#"
-          const sections = filteredData.reduce((acc, task) => {
-            const hashSplit = task.title.split("#");
-            const sSplit = hashSplit[0].split("s-");
-            let sectionName = "No Section"; // Default section name
-            let taskTitle = sSplit[0].trim(); // Main task title
-            let sublistName = sSplit[1] ? sSplit[1].trim() : null; // Sublist name from "-s"
-            let hashName = hashSplit[1] ? hashSplit[1].trim() : null; // Name from "#"
-
-            // Determine section name based on "#" existence
-            if (hashName) {
-              sectionName = hashName;
-            }
-
-            // Organize tasks by section name
-            if (!acc[sectionName]) {
-              acc[sectionName] = [];
-            }
-            acc[sectionName].push({
-              ...task,
-              title: taskTitle,
-              sublist: sublistName,
-              hashName: hashName,
-            });
-            return acc;
-          }, {});
-
-          // Create the sections and tasks layout
-          const sectionRow = document.createElement("div");
-          sectionRow.classList.add("flex", "flex-wrap", "gap-4");
-
-          Object.keys(sections).forEach((sectionName) => {
-            // Container for each section
-            const sectionContainer = document.createElement("div");
-            sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
-
-            // Section header
-            const sectionHeader = document.createElement("p");
-            sectionHeader.textContent = sectionName;
-            sectionHeader.classList.add("mb-4");
-            if (sectionName === "No Section") {
-              sectionHeader.classList.add("text-red-500");
-            }
-
-            // Container for tasks in each section
-            const taskContainer = document.createElement("div");
-            taskContainer.classList.add("flex", "flex-col");
-
-            sections[sectionName].forEach((task) => {
               const dueDate = task.due ? new Date(task.due) : null;
               const formattedDate = dueDate
                 ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
                     dueDate.getMonth() + 1
                   ).padStart(2, "0")}.${dueDate.getFullYear()}`
-                : null;
+                : "";
 
-              // Task card layout
               const taskCard = document.createElement("div");
               taskCard.classList.add(
                 "bg-white",
@@ -694,44 +600,220 @@
                 "mb-2"
               );
 
-              // Display four fields if both "-s" and "#" exist; otherwise, display three fields
-              let taskCardHTML = `
-          ${
-            task.title ? `<p class="text-md font-medium">${task.title}</p>` : ""
-          }
-          ${
-            task.sublist
-              ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>`
-              : ""
-          }
-          ${
-            formattedDate
-              ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
-              : ""
-          }
-          ${
-            task.hashName
-              ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>`
-              : ""
-          }
-        `;
+              const taskCardHTML = `
+        <p class="text-md font-medium">${task.title}</p>
+        ${
+          formattedDate
+            ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+            : ""
+        }
+    `;
 
               taskCard.innerHTML = taskCardHTML;
-              taskContainer.appendChild(taskCard);
+              noSectionTaskContainer.appendChild(taskCard);
             });
 
-            sectionContainer.appendChild(sectionHeader);
-            sectionContainer.appendChild(taskContainer);
-            sectionRow.appendChild(sectionContainer);
-          });
+            noSectionContainer.appendChild(noSectionHeader);
+            noSectionContainer.appendChild(noSectionTaskContainer);
+            sectionRow.appendChild(noSectionContainer);
+          }
 
-          mainContent.appendChild(sectionRow);
+          container.appendChild(sectionRow);
         } else {
-          console.error("Local data is missing or not in expected format.");
-          mainContent.innerHTML =
+          console.error("Data is missing or not in expected format.");
+          container.innerHTML =
             '<div class="text-red-500">No sections available to display.</div>';
         }
       }
+
+      function displayLocalData(localData, sectionsArray) {
+  console.log(localData, "===============");
+  const mainContent = document.getElementById("sublist-container");
+  mainContent.innerHTML = ""; // Clear existing content
+
+  if (localData && Array.isArray(localData.data)) {
+    // Filter tasks to include only those with "-s" in the title
+    const filteredData = localData.data.filter((task) =>
+      task.title.includes("s-")
+    );
+
+    // Group tasks based on the presence of "#"
+    const sections = filteredData.reduce((acc, task) => {
+      const hashSplit = task.title.split("#");
+      const sSplit = hashSplit[0].split("s-");
+      let sectionName = "No Section"; // Default section name
+      let taskTitle = sSplit[0].trim(); // Main task title
+      let sublistName = sSplit[1] ? sSplit[1].trim() : null; // Sublist name from "-s"
+      let hashName = hashSplit[1] ? hashSplit[1].trim() : null; // Name from "#"
+
+      // Determine section name based on "#" existence
+      if (hashName) {
+        sectionName = hashName;
+      }
+
+      // Organize tasks by section name
+      if (!acc[sectionName]) {
+        acc[sectionName] = [];
+      }
+      acc[sectionName].push({
+        ...task,
+        title: taskTitle,
+        sublist: sublistName,
+        hashName: hashName,
+      });
+      return acc;
+    }, {});
+
+    // Create the sections and tasks layout
+    const sectionRow = document.createElement("div");
+    sectionRow.classList.add("flex", "flex-wrap", "gap-4");
+
+    // Display tasks grouped by sectionsArray order
+    sectionsArray.forEach((sectionName) => {
+      const sectionContainer = document.createElement("div");
+      sectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
+
+      const sectionHeader = document.createElement("p");
+      sectionHeader.textContent = sectionName;
+      sectionHeader.classList.add("mb-4");
+      if (sectionName === "No Section") {
+        sectionHeader.classList.add("text-red-500");
+      }
+
+      const taskContainer = document.createElement("div");
+      taskContainer.classList.add("flex", "flex-col");
+
+      // If no section matches, display under 'No Section'
+      if (sections[sectionName]) {
+        sections[sectionName].forEach((task) => {
+          const dueDate = task.due ? new Date(task.due) : null;
+          const formattedDate = dueDate
+            ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+                dueDate.getMonth() + 1
+              ).padStart(2, "0")}.${dueDate.getFullYear()}`
+            : null;
+
+          const taskCard = document.createElement("div");
+          taskCard.classList.add(
+            "bg-white",
+            "p-4",
+            "rounded-lg",
+            "shadow-sm",
+            "flex",
+            "flex-col",
+            "items-center",
+            "text-center",
+            "mb-2"
+          );
+
+          let taskCardHTML = `
+                    ${
+                      task.title
+                        ? `<p class="text-md font-medium">${task.title}</p>`
+                        : ""
+                    }
+                    ${
+                      task.sublist
+                        ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>`
+                        : ""
+                    }
+                    ${
+                      formattedDate
+                        ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+                        : ""
+                    }
+                    ${
+                      task.hashName
+                        ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>`
+                        : ""
+                    }
+                `;
+
+          taskCard.innerHTML = taskCardHTML;
+          taskContainer.appendChild(taskCard);
+        });
+      } else {
+        taskContainer.innerHTML =
+          '<p class="text-gray-400">No tasks available</p>';
+      }
+
+      sectionContainer.appendChild(sectionHeader);
+      sectionContainer.appendChild(taskContainer);
+      sectionRow.appendChild(sectionContainer);
+    });
+
+    // Ensure that "No Section" always appears if any tasks belong there
+    if (sections["No Section"] && sections["No Section"].length > 0) {
+      const noSectionContainer = document.createElement("div");
+      noSectionContainer.classList.add("bg-gray-100", "p-4", "rounded-lg");
+
+      const noSectionHeader = document.createElement("p");
+      noSectionHeader.textContent = "No Section";
+      noSectionHeader.classList.add("mb-4", "text-red-500");
+
+      const noSectionTaskContainer = document.createElement("div");
+      noSectionTaskContainer.classList.add("flex", "flex-col");
+
+      sections["No Section"].forEach((task) => {
+        const dueDate = task.due ? new Date(task.due) : null;
+        const formattedDate = dueDate
+          ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+              dueDate.getMonth() + 1
+            ).padStart(2, "0")}.${dueDate.getFullYear()}`
+          : null;
+
+        const taskCard = document.createElement("div");
+        taskCard.classList.add(
+          "bg-white",
+          "p-4",
+          "rounded-lg",
+          "shadow-sm",
+          "flex",
+          "flex-col",
+          "items-center",
+          "text-center",
+          "mb-2"
+        );
+
+        let taskCardHTML = `
+                ${
+                  task.title
+                    ? `<p class="text-md font-medium">${task.title}</p>`
+                    : ""
+                }
+                ${
+                  task.sublist
+                    ? `<p class="text-sm text-gray-400 mt-1">${task.sublist}</p>`
+                    : ""
+                }
+                ${
+                  formattedDate
+                    ? `<p class="text-sm text-gray-400 mt-1">${formattedDate}</p>`
+                    : ""
+                }
+                ${
+                  task.hashName
+                    ? `<p class="text-sm text-gray-400 mt-1">#${task.hashName}</p>`
+                    : ""
+                }
+            `;
+
+        taskCard.innerHTML = taskCardHTML;
+        noSectionTaskContainer.appendChild(taskCard);
+      });
+
+      noSectionContainer.appendChild(noSectionHeader);
+      noSectionContainer.appendChild(noSectionTaskContainer);
+      sectionRow.appendChild(noSectionContainer);
+    }
+
+    mainContent.appendChild(sectionRow);
+  } else {
+    console.error("Local data is missing or not in expected format.");
+    mainContent.innerHTML =
+      '<div class="text-red-500">No sections available to display.</div>';
+  }
+}
 
       function closeSectionModal() {
         document.getElementById("sectionModal").classList.add("hidden");
@@ -782,8 +864,10 @@
             .then((response) => response.json())
             .then((data) => {
               if (data.message === "Section added successfully") {
+                let sublistTitle=localStorage.getItem("currentsubtitle")
+            let listtitle=localStorage.getItem("currentlisttitle")
                 // window.location.href = `/tasks/list`;
-                openSection(`${subList_id},${google_list_id}`);
+                openSection(`${subList_id},${google_list_id}`,sublistTitle,listtitle);
 
                 // window.location.reload();
                 closeSectionModal();
@@ -814,7 +898,8 @@
             .then((data) => {
               if (data.message === "Section added successfully") {
                 // window.location.href = `/tasks/list`;
-                addListSection(`${google_list_id}`);
+               let title= localStorage.getItem('currentTitle')
+                addListSection(`${google_list_id}`,title);
                 // window.location.reload();
                 closeSectionModal();
               }
