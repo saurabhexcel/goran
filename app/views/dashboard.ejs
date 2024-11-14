@@ -372,7 +372,7 @@
       `;
 
             if (storedData) {
-              displayLocalData(JSON.parse(storedData), sections);
+              displayLocalData(JSON.parse(storedData), sections,sublistTitle);
             }
           })
           .catch((error) => console.error("Error fetching sections:", error));
@@ -626,16 +626,24 @@
         }
       }
 
-      function displayLocalData(localData, sectionsArray) {
-  console.log(localData, "===============");
-  const mainContent = document.getElementById("sublist-container");
+      function displayLocalData(localData, sectionsArray,sublistTitle) {
+      const mainContent = document.getElementById("sublist-container");
   mainContent.innerHTML = ""; // Clear existing content
 
   if (localData && Array.isArray(localData.data)) {
     // Filter tasks to include only those with "-s" in the title
-    const filteredData = localData.data.filter((task) =>
-      task.title.includes("s-")
-    );
+    const filteredData = localData.data.filter((task) => {
+        if (!task.title.includes("s-")) return false;
+
+        const sIndex = task.title.indexOf("s-") + 2;
+        const hashIndex = task.title.indexOf("#", sIndex);
+
+        const taskSublistName = hashIndex !== -1
+          ? task.title.slice(sIndex, hashIndex).trim().toLowerCase()
+          : task.title.slice(sIndex).trim().toLowerCase();
+
+        return taskSublistName === sublistTitle.toLowerCase(); 
+  });
 
     // Group tasks based on the presence of "#"
     const sections = filteredData.reduce((acc, task) => {
