@@ -70,9 +70,9 @@
                   <button onclick="openModal('<%= list.id %>')">
                     <img src="/images/add.png" class="w-4 h-4" />
                   </button>
-                  
+
                 </div>
-               
+
 
                 <% if (basesublists.some(sublist=> sublist.google_list_id ===
                 list.id)) { %>
@@ -424,7 +424,7 @@
                    ${sectionsHTML}
                 </div>
                   <div id="sublist-container"></div>
-                  
+
       `;
 
             if (storedData) {
@@ -459,7 +459,7 @@
             );
             const listTitle=localStorage.getItem("currentTitle")
             console.log(listTitle,"========listTitle");
-            
+
             mainContent.innerHTML = `
           <h2 class="font-semibold">${listTitle}</h2>
           <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
@@ -467,9 +467,9 @@
           <div class="flex flex-wrap gap-10">
                    ${sectionsHTML}
                 </div>
-        
+
                   <div id="data-container"></div>
-        
+
       `;
             if (storedData) {
               displayData(JSON.parse(storedData), sections);
@@ -489,9 +489,9 @@
         const mainContent = document.getElementById("main-content");
         mainContent.innerHTML = originalContent;
       }
-      function openModal() {
+      function openModal(id) {
         document.getElementById("modal").classList.remove("hidden");
-        // document.getElementById("listId").value = id;
+        document.getElementById("listId").value = id;
       }
       function openListModal(id) {
         document.getElementById("Listmodal").classList.remove("hidden");
@@ -706,7 +706,7 @@
           ? task.title.slice(sIndex, hashIndex).trim().toLowerCase()
           : task.title.slice(sIndex).trim().toLowerCase();
 
-        return taskSublistName === sublistTitle.toLowerCase(); 
+        return taskSublistName === sublistTitle.toLowerCase();
   });
 
     // Group tasks based on the presence of "#"
