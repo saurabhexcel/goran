@@ -15,6 +15,7 @@ router.post('/add/listSection', verifyToken, taskController.addListSection)
 router.get('/listSection', verifyToken, taskController.getListSectionsByListId)
 router.get('/googleTasks', verifyToken, taskController.getTasksbyId)
 router.post('/add/list', taskController.addList)
+router.post('/addTask/:tasklistId',taskController.addTask)
 
 // router.get('/gapi/allTask', taskController.listFromGapi);
 

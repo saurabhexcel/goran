@@ -185,14 +185,14 @@ exports.getAllSublists = async (req, res) => {
 
         console.log(sublists);
 
-        res.render('dashboard', {
-            baselists: [],
-            basesublists: Object.values(sublists)
-        });
-        // res.status(200).json({
-        //     message: 'Sublists retrieved successfully',
-        //     sublists: Object.values(sublists) // Convert the sublists object to an array of values
+        // res.render('dashboard', {
+        //     baselists: [],
+        //     basesublists: Object.values(sublists)
         // });
+        res.status(200).json({
+            message: 'Sublists retrieved successfully',
+            sublists: Object.values(sublists) // Convert the sublists object to an array of values
+        });
     } catch (error) {
         console.error('Error retrieving sublists:', error);
         res.status(500).json({ message: 'Failed to retrieve sublists' });
@@ -468,4 +468,37 @@ exports.addList = async (req, res) =>{
   }
 }
 
+ exports.addTask = async(req, res) =>{
+    try{
+      const { tasklistId } = req.params;
+      const { title, notes, due } = req.body;
 
+      if (!tasklistId || !title) {
+        return res.status(400).json({ message: "Task list ID and title are required." });
+    }
+      const dueDate = due ? new Date(due).toISOString() : new Date().toISOString();
+
+      const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
+
+      const taskData = {
+        title,
+        notes,
+        due: dueDate
+      }
+
+      const response = await tasksApi.tasks.insert({
+          tasklist: tasklistId,
+          requestBody: taskData
+      })
+
+      res.status(200).json({
+        message: "Task added successfully",
+        data: response.data
+      })
+    }catch(e){
+        console.error("Failed to create task",e)
+        res.status(500).json({
+            message: "Failed to create task"
+        })
+    }
+ }
