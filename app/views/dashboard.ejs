@@ -70,7 +70,9 @@
                   <button onclick="openModal('<%= list.id %>')">
                     <img src="/images/add.png" class="w-4 h-4" />
                   </button>
+                  
                 </div>
+               
 
                 <% if (basesublists.some(sublist=> sublist.google_list_id ===
                 list.id)) { %>
@@ -111,6 +113,14 @@
               <% } %>
             </ul>
           </nav>
+          <div class="flex items-center space-x-1 py-1 px-4">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="w-4 h-4 text-black">
+              <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"/>
+            </svg>
+            <button class="nav-item items-center  text-black" onclick="openListModal()">
+              Create New List
+            </button>
+          </div>
         </div>
       </div>
 
@@ -194,7 +204,7 @@
         <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
           Create Sub List
         </h3>
-        <form id="createListForm">
+        <form id="createSubListForm">
           <input
             type="hidden"
             id="listId"
@@ -333,6 +343,52 @@
       </div>
     </div>
 
+    <!-- create list -->
+    <div
+    id="Listmodal"
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
+  >
+    <div
+      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+    >
+      <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">
+        Create  List
+      </h3>
+      <form id="createListForm">
+        <!-- <input
+          type="hidden"
+          id="listId"
+          name="listId"
+          required
+          class="mt-2 p-2 w-full border rounded"
+        /> -->
+        <input
+          type="text"
+          id="NewlistName"
+          name="NewlistName"
+          required
+          class="mt-2 p-2 w-full border rounded"
+          placeholder="Enter list name"
+        />
+        <div class="mt-4">
+          <button
+            type="submit"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Create
+          </button>
+          <button
+            type="button"
+            onclick="closeListModal()"
+            class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
     <script>
       function openSection(ids, sublistTitle, listTitle) {
         localStorage.setItem("currentsubtitle",sublistTitle)
@@ -433,9 +489,17 @@
         const mainContent = document.getElementById("main-content");
         mainContent.innerHTML = originalContent;
       }
-      function openModal(id) {
+      function openModal() {
         document.getElementById("modal").classList.remove("hidden");
+        // document.getElementById("listId").value = id;
+      }
+      function openListModal(id) {
+        document.getElementById("Listmodal").classList.remove("hidden");
         document.getElementById("listId").value = id;
+      }
+      function closeListModal() {
+        document.getElementById("Listmodal").classList.add("hidden");
+        document.getElementById("sectionId").value = "";
       }
 
       function closeModal() {
@@ -830,7 +894,7 @@
       }
 
       document
-        .getElementById("createListForm")
+        .getElementById("createSubListForm")
         .addEventListener("submit", function (e) {
           e.preventDefault();
           const sublist_name = document.getElementById("listName").value;
@@ -848,6 +912,34 @@
               if (data.message === "Sublist added successfully") {
                 // window.location.href = `/tasks/list`;
                 window.location.reload();
+                closeListModal();
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+            });
+        });
+        // create list
+        document
+        .getElementById("createListForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const title = document.getElementById("NewlistName").value;
+          console.log(title,"===============")
+          // const google_list_id = document.getElementById("listId").value;
+
+          fetch("/tasks/add/list", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ title }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "List added successfully") {
+                // window.location.href = `/tasks/list`;
+                window.location.reload();
                 closeModal();
               }
             })
@@ -855,6 +947,7 @@
               console.error("Error:", error);
             });
         });
+
       document
         .getElementById("addSection")
         .addEventListener("submit", function (e) {
