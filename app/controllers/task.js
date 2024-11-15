@@ -92,7 +92,7 @@ exports.getTaskList = async (req, res) => {
             baselists: lists.length > 0 ? lists : [],
             basesublists: basesublists.length > 0 ? basesublists : [],
         });
-        
+
     } catch (err) {
         console.error('Error processing request:', err);
         res.status(500).json({ message: 'Internal server error', error: err.message });
@@ -192,7 +192,7 @@ exports.getAllSublists = async (req, res) => {
         // res.status(200).json({
         //     message: 'Sublists retrieved successfully',
         //     sublists: Object.values(sublists) // Convert the sublists object to an array of values
-        // });    
+        // });
     } catch (error) {
         console.error('Error retrieving sublists:', error);
         res.status(500).json({ message: 'Failed to retrieve sublists' });
@@ -286,7 +286,7 @@ exports.getSublistSections = async (req, res) => {
         const {email} = req.decoded;
 
         const { google_list_id, sublist_id } = req.query;
-        
+
         // Validate input parameters
         if (!email || !google_list_id || !sublist_id) {
             return res.status(400).json({ message: 'Missing required parameters: email, google_list_id, and sublist_id are required' });
@@ -294,7 +294,7 @@ exports.getSublistSections = async (req, res) => {
 
         // Fetch user data from the database
         let userData = await knex('googleUsers').where({ email }).first();
-        
+
         if (!userData || !userData.data) {
             return res.status(404).json({ message: 'User data not found in the database' });
         }
@@ -445,3 +445,27 @@ exports.getTasksbyId = async (req, res) => {
         res.status(500).json({ message: 'Failed to retrieve Google tasks' });
     }
 };
+
+exports.addList = async (req, res) =>{
+   try{
+      const { title } = req.body;
+      const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
+      const response = await tasksApi.tasklists.insert({
+        requestBody: {
+            title
+        }
+      })
+      res.status(200).json({
+        message:"List added successfully",
+        data: response.data
+      })
+
+   }catch(error) {
+    console.error('Error creating list:', error);
+    res.status(500).json({
+        message: "Failed  to create list"
+    });
+  }
+}
+
+

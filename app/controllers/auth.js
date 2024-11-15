@@ -85,10 +85,10 @@ exports.register = (req, res) => {
 }
 
 exports.googleLogin = (req, res) =>{
-    
+
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
-        scope: ['https://www.googleapis.com/auth/tasks.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'],
+        scope: ['https://www.googleapis.com/auth/tasks.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/tasks'],
     });
 
     res.redirect(authUrl);
@@ -109,10 +109,10 @@ exports.callbackFunction = async (req, res) => {
         // Get user info
         const oauth2 = google.oauth2({ auth: oauth2Client, version: 'v2' });
         const userInfo = await oauth2.userinfo.get();
- 
+
         const email = userInfo.data.email;
         console.log(email);
-        
+
         const userData = await knex('googleUsers').where({ email: email }).first();
         if(!userData){
             try {
@@ -120,7 +120,7 @@ exports.callbackFunction = async (req, res) => {
                await knex('googleUsers')
                .insert({ email, data:{} }) // or update as necessary
 
-            } catch (error) {               
+            } catch (error) {
                res.status(500).send("failed to store in DB");
             }
         }
@@ -128,7 +128,7 @@ exports.callbackFunction = async (req, res) => {
         // Store the email in the JWT for later access
         const token = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
         res.cookie('jwt', token);
-        
+
         // Redirect to the desired route after successful authentication
         res.redirect('/tasks/list');
 

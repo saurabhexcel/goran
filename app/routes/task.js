@@ -3,7 +3,7 @@ const taskController = require('../controllers/task');
 const router = express.Router();
 const { verifyToken } = require('../middlewares');
 
-// Routers  
+// Routers
 router.get('/', taskController.getTasksList);
 router.get('/list', verifyToken, taskController.getTaskList);
 router.post('/add/subList', verifyToken, taskController.addSublist);
@@ -14,6 +14,7 @@ router.get('/subList/section', verifyToken, taskController.getSublistSections);
 router.post('/add/listSection', verifyToken, taskController.addListSection)
 router.get('/listSection', verifyToken, taskController.getListSectionsByListId)
 router.get('/googleTasks', verifyToken, taskController.getTasksbyId)
+router.post('/add/list', taskController.addList)
 
 // router.get('/gapi/allTask', taskController.listFromGapi);
 
