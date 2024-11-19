@@ -498,6 +498,28 @@
             Due date
           </p>
         </div>
+
+        
+        <!-- Dropdown Menu -->
+        <div 
+          id="subdropdown" 
+          class="absolute top-20 left-[312px] mt-2 w-48 bg-white shadow-md rounded-lg hidden">
+          <p 
+          class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+          onclick="selectSubListItem(this)">
+          Sections
+          </p>
+          <p 
+            class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+            onclick="selectSubListItem(this)">
+            Sublists
+          </p>
+          <p 
+            class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+            onclick="selectSubListItem(this)">
+            Due date
+          </p>
+        </div>
      
       
       
@@ -506,6 +528,8 @@
       let Listsections;
       let listTitle;
       let baseID;
+      let sections;
+      let sublistTitle;
       function openSection(ids, sublistTitle, listTitle) {
         localStorage.setItem("currentsubtitle", sublistTitle);
         localStorage.setItem("currentlisttitle", listTitle);
@@ -532,8 +556,8 @@
             }
 
             
-            let sections = data.sections.map((section) => section.section_name);
-            let sublistTitle = localStorage.getItem("currentsubtitle");
+            sections = data.sections.map((section) => section.section_name);
+            sublistTitle = localStorage.getItem("currentsubtitle");
             let listtitle = localStorage.getItem("currentlisttitle");
             mainContent.innerHTML = `
           <h2 class="font-semibold">${listtitle} / ${sublistTitle}</h2>
@@ -541,6 +565,11 @@
              <div class="flex flex-wrap">
                    ${sectionsHTML}
                 </div>
+                   <div 
+          class="cursor-pointer text-xl font-bold" 
+          onclick="toggleSubListDropdown()">
+          ...
+        </div>
 
                   <div id="sublist-container"></div>
 
@@ -1267,6 +1296,11 @@ function toggleDropdown() {
   dropdown.classList.toggle('hidden');
 }
 
+function toggleSubListDropdown(){
+  const dropdown = document.getElementById('subdropdown');
+  dropdown.classList.toggle('hidden');
+}
+
 function selectItem(item) {
   const selectedValue = item.textContent.trim();
 
@@ -1515,6 +1549,179 @@ if (selectedValue === "Due date") {
   selectedItem.appendChild(checkmark);
 }
 
+
+function selectSubListItem(item){
+  const selectedValue = item.textContent.trim();
+
+  if (selectedItem) {
+    selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
+    const checkmark = selectedItem.querySelector('.checkmark');
+    if (checkmark) {
+      checkmark.remove();
+    }
+  }
+  const storedData = localStorage.getItem(`apiData_${baseID}`);
+  if (selectedValue === "Sublists") {
+  let sublistTitle = localStorage.getItem("currentsubtitle");
+
+  const dataContainer = document.getElementById("sublist-container");
+  if (dataContainer) {
+    dataContainer.innerHTML = "";
+    const parsedData = JSON.parse(storedData);
+    if (parsedData && Array.isArray(parsedData.data)) {
+      const filteredTasks = parsedData.data.filter((item) => {
+        const title = item.title || "";
+        const prefixMatch = title.match(/s-([^#]+)/);
+        return prefixMatch && prefixMatch[1] === sublistTitle;
+      });
+
+      if (filteredTasks.length > 0) {
+        const header = document.createElement("p");
+        header.textContent = sublistTitle;
+        header.classList.add("text-md", "mb-4");
+        dataContainer.appendChild(header);
+        const rowContainer = document.createElement("div");
+        rowContainer.classList.add("flex", "flex-wrap", "justify-start","flex-col");
+        dataContainer.appendChild(rowContainer);
+        filteredTasks.forEach((task) => {
+          const title = task.title || "";
+          const taskName = title.split(" ")[0] || "Unknown";
+          const [prefix, section] = title.split("#");
+          const prefixValue = prefix.split("s-")[1]?.trim() || "";
+          const sectionValue = section?.trim() || "";
+          let dueDate = task.due || "";
+          if (dueDate) {
+            const date = new Date(dueDate);
+            dueDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+              .toString()
+              .padStart(2, "0")}/${date.getFullYear()}`;
+          }
+          const card = document.createElement("div");
+          card.classList.add("bg-white", "p-4", "m-2", "border", "shadow-lg", "w-[25%]","rounded");
+          let cardContent = "";
+          if (taskName) cardContent += `<p>${taskName}</p>`;
+          if (prefixValue) cardContent += `<p>s-${prefixValue}</p>`;
+          if (sectionValue) cardContent += `<p>#${sectionValue}</p>`;
+          if (dueDate) cardContent += `<p>${dueDate}</p>`;
+          card.innerHTML = cardContent;
+          rowContainer.appendChild(card);
+        });
+      } else {
+        const message = document.createElement("p");
+        message.textContent = "No tasks found for the selected sublist.";
+        message.classList.add("text-gray-500", "italic");
+        dataContainer.appendChild(message);
+      }
+    }
+   }
+  }
+  if(selectedValue === "Sections"){
+    let sublistTitle = localStorage.getItem("currentsubtitle");
+    displayLocalData(JSON.parse(storedData),sections,sublistTitle)
+
+  }
+
+  if (selectedValue === "Due date") {
+  let sublistTitle = localStorage.getItem("currentsubtitle");
+
+  const dataContainer = document.getElementById("sublist-container");
+  if (dataContainer) {
+    dataContainer.innerHTML = "";
+    const parsedData = JSON.parse(storedData);
+    console.log(parsedData, "parsed data");
+    if (parsedData && Array.isArray(parsedData.data)) {
+      const filteredTasks = parsedData.data.filter((item) => {
+        const title = item.title || "";
+        const prefixMatch = title.match(/s-([^#]+)/);
+        return prefixMatch && prefixMatch[1] === sublistTitle;
+      });
+      const tasksByDate = {};
+      const noDueDateTasks = [];
+
+      filteredTasks.forEach((task) => {
+        if (task.due) {
+          const date = new Date(task.due);
+          const fullDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}/${date.getFullYear()}`;
+
+          const shortDate = `${date.getDate().toString().padStart(2, "0")} ${date.toLocaleString('en-us', { month: 'short' })}`;
+          if (!tasksByDate[fullDate]) {
+            tasksByDate[fullDate] = [];
+          }
+          tasksByDate[fullDate].push({ task, shortDate }); 
+        } else {
+          noDueDateTasks.push(task);
+        }
+      });
+      const rowContainer = document.createElement("div");
+      rowContainer.classList.add("flex", "flex-wrap", "justify-start", "space-x-6");
+      dataContainer.appendChild(rowContainer);
+      Object.keys(tasksByDate).forEach((fullDate) => {
+        const tasksWithDate = tasksByDate[fullDate];
+        const dateSection = document.createElement("div");
+        dateSection.classList.add("flex", "flex-col", "items-start");
+        rowContainer.appendChild(dateSection);
+        const header = document.createElement("p");
+        header.textContent = tasksWithDate[0].shortDate;
+        header.classList.add("text-md", "mb-4");
+        dateSection.appendChild(header);
+        tasksWithDate.forEach(({ task }) => {
+          const title = task.title || "";
+          const taskName = title.split(" ")[0] || "Unknown";
+
+          const [prefix, section] = title.split("#");
+          const prefixValue = prefix.split("s-")[1]?.trim() || "";
+          const sectionValue = section?.trim() || "";
+          const card = document.createElement("div");
+          card.classList.add("bg-white", "p-4", "m-2", "border", "shadow-lg", "rounded");
+          let cardContent = "";
+          if (taskName) cardContent += `<p>${taskName}</p>`;
+          if (prefixValue) cardContent += `<p>s-${prefixValue}</p>`;
+          if (sectionValue) cardContent += `<p>#${sectionValue}</p>`;
+          cardContent += `<p>${fullDate}</p>`;
+          card.innerHTML = cardContent;
+          dateSection.appendChild(card);
+        });
+      });
+      if (noDueDateTasks.length > 0) {
+        const noDueDateSection = document.createElement("div");
+        noDueDateSection.classList.add("flex", "flex-col", "items-start");
+        rowContainer.appendChild(noDueDateSection);
+
+        const noDueDateHeader = document.createElement("p");
+        noDueDateHeader.textContent = "No Due Date";
+        noDueDateHeader.classList.add("text-md", "mb-4");
+        noDueDateSection.appendChild(noDueDateHeader);
+        noDueDateTasks.forEach((task) => {
+          const title = task.title || "";
+          const taskName = title.split(" ")[0] || "Unknown";
+          const [prefix, section] = title.split("#");
+          const prefixValue = prefix.split("s-")[1]?.trim() || "";
+          const sectionValue = section?.trim() || "";
+          const card = document.createElement("div");
+          card.classList.add("bg-white", "p-4", "m-2", "border", "shadow-lg", "rounded");
+          let cardContent = "";
+          if (taskName) cardContent += `<p>${taskName}</p>`;
+          if (prefixValue) cardContent += `<p>s-${prefixValue}</p>`;
+          if (sectionValue) cardContent += `<p>#${sectionValue}</p>`;
+          card.innerHTML = cardContent;
+          noDueDateSection.appendChild(card);
+        });
+      }
+    }
+  }
+}
+
+
+  selectedItem = item;
+  selectedItem.classList.add('bg-blue-100', 'text-blue-600');
+
+  const checkmark = document.createElement('span');
+  checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
+  checkmark.textContent = '✓';
+  selectedItem.appendChild(checkmark);
+}
     </script>
   </body>
 </html>
