@@ -17,6 +17,7 @@
         overflow: hidden;
         transition: max-height 0.5s ease-out;
       }
+
     </style>
   </head>
 
@@ -36,7 +37,7 @@
             >
           </div>
         </div>
-
+        
         <div class="mt-6">
           <h3 class="font-semibold mb-2">My Projects</h3>
           <nav class="w-full py-4">
@@ -442,7 +443,7 @@
 
               <div>
                 <label for="sublist" class="block text-sm font-medium text-gray-700 mb-1">Sublist</label>
-                <select id="sublist" class="w-full px-3 py-2 border rounded-md" onchange="getSectionsBySublist(this)">
+                <select id="sublist" class="w-full px-3 py-2 border rounded-md">
                   <option>Choose Sublist</option>
                 </select>
               </div>
@@ -477,8 +478,34 @@
         </div>
       </div>
       
+        <!-- Dropdown Menu -->
+        <div 
+          id="dropdown" 
+          class="absolute top-20 left-[312px] mt-2 w-48 bg-white shadow-md rounded-lg hidden">
+          <p 
+          class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+          onclick="selectItem(this)">
+          Sections
+          </p>
+          <p 
+            class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+            onclick="selectItem(this)">
+            Sublists
+          </p>
+          <p 
+            class="dropdown-item px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+            onclick="selectItem(this)">
+            Due date
+          </p>
+        </div>
+     
+      
+      
 
     <script>
+      let Listsections;
+      let listTitle;
+      let baseID;
       function openSection(ids, sublistTitle, listTitle) {
         localStorage.setItem("currentsubtitle", sublistTitle);
         localStorage.setItem("currentlisttitle", listTitle);
@@ -503,6 +530,8 @@
                 )
                 .join("");
             }
+
+            
             let sections = data.sections.map((section) => section.section_name);
             let sublistTitle = localStorage.getItem("currentsubtitle");
             let listtitle = localStorage.getItem("currentlisttitle");
@@ -512,6 +541,7 @@
              <div class="flex flex-wrap">
                    ${sectionsHTML}
                 </div>
+
                   <div id="sublist-container"></div>
 
       `;
@@ -543,10 +573,11 @@
                 )
                 .join("");
             }
-            const sections = data?.sections?.map(
+            Listsections = data?.sections?.map(
               (section) => section?.section_name
             );
-            const listTitle = localStorage.getItem("currentTitle");
+            baseID = id
+            listTitle = localStorage.getItem("currentTitle");
 
             mainContent.innerHTML = `
           <h2 class="font-semibold">${listTitle}</h2>
@@ -555,12 +586,17 @@
           <div class="flex flex-wrap gap-10">
                    ${sectionsHTML}
                 </div>
+                                 <div 
+          class="cursor-pointer text-xl font-bold" 
+          onclick="toggleDropdown()">
+          ...
+        </div>
 
                   <div id="data-container"></div>
 
       `;
             if (storedData) {
-              displayData(JSON.parse(storedData), sections);
+              displayData(JSON.parse(storedData), Listsections);
             }
           })
           .catch((error) => console.error("Error fetching sections:", error));
@@ -622,6 +658,7 @@
       }
 
       function displayData(data, sectionsArray) {
+        console.log("data============")
         const container = document.getElementById("data-container");
         container.innerHTML = "";
 
@@ -779,11 +816,12 @@
       }
 
       function displayLocalData(localData, sectionsArray, sublistTitle) {
-        const mainContent = document.getElementById("sublist-container");
-        mainContent.innerHTML = ""; // Clear existing content
+        console.log(localData, sectionsArray, sublistTitle,"localData, sectionsArray, sublistTitle")
 
+        const mainContent = document.getElementById("sublist-container");
+        mainContent.innerHTML = ""; // Clear existing   
         if (localData && Array.isArray(localData.data)) {
-          // Filter tasks to include only those with "-s" in the title
+          // Filter tasks to  include only those with "-s" in the title
           const filteredData = localData.data.filter((task) => {
             if (!task.title.includes("s-")) return false;
 
@@ -1113,19 +1151,32 @@
   }
 
   function closeForm() {
+    const form = document.getElementById("addForm");
+
+    // Clear input fields
+    form.reset();
+
+    // Clear dropdowns to default values
+    document.querySelector("input[placeholder='Add Title']").value = "";
+    document.getElementById("list").selectedIndex = 0;
+    document.getElementById("sublist").innerHTML = '<option>Choose Sublist</option>';
+    document.getElementById("section").innerHTML = '<option>Choose Section</option>';
     document.getElementById("formContainer").classList.add("hidden");
   }
 
   let allListAndSection;
-  function getListId(selectElement) {
-  const selectedOption = selectElement.options[selectElement.selectedIndex];
-  const selectedValue = selectedOption.value;
+
+function getListId(selectElement) {
+  // const selectedOption = selectElement.options[selectElement.selectedIndex];
+  const selectedValue = selectElement.value;
+
   fetch(`/tasks/subList/all?google_list_id=${selectedValue}`)
     .then((response) => response.json())
     .then((data) => {
-      allListAndSection = data
+      allListAndSection = data;
+
+      // Populate sublist dropdown
       const sublistSelect = document.getElementById('sublist');
-      
       sublistSelect.innerHTML = '<option>Choose Sublist</option>';
       data.sublists.forEach((sublist) => {
         const option = document.createElement('option');
@@ -1133,31 +1184,24 @@
         option.textContent = sublist.sublist_name;
         sublistSelect.appendChild(option);
       });
+
+      // Populate section dropdown directly
+      const sectionSelect = document.getElementById('section');
+      sectionSelect.innerHTML = '<option>Choose Section</option>';
+      data.sublists.forEach((sublist) => {
+        if (sublist.sections) {
+          const sections = Object.values(sublist.sections);
+          sections.forEach((section) => {
+            const option = document.createElement('option');
+            option.value = section.section_id;
+            option.textContent = section.section_name;
+            sectionSelect.appendChild(option);
+          });
+        }
+      });
     })
     .catch((error) => console.error("Error fetching data:", error));
-    }
-  function getSectionsBySublist(value){
-    const selectedOption = value.options[value.selectedIndex];
-    const selectedValue = selectedOption.value
-
-     let selectedItem;
-    allListAndSection.sublists.map(item=>{
-      if(item.sublist_id == selectedValue){
-        selectedItem = item
-      }
-    })
-    const sublistSelect = document.getElementById('section');
-      
-    sublistSelect.innerHTML = '<option>Choose section</option>';
-    
-    const data = Object.entries( selectedItem.sections).map(([key, value]) => ({ key, value }));
-    data.forEach((item) => {
-        const option = document.createElement('option');
-        option.value = item.value.section_id; 
-        option.textContent = item.value.section_name; 
-        sublistSelect.appendChild(option);
-      });
-    }
+}
 
   document.getElementById("saveButton").addEventListener("click", function (e) {
   e.preventDefault();
@@ -1173,7 +1217,21 @@
   const sublistName = sublistElement.options[sublistElement.selectedIndex].text.trim();
   const sectionName = sectionElement.options[sectionElement.selectedIndex].text.trim();
 
-  const formattedTitle = `${taskTitle}  s-${sublistName}#${sectionName}`;
+  // const formattedTitle = `${taskTitle}  s-${sublistName}#${sectionName}`;
+  let formattedTitle;
+
+  if (taskTitle) {
+    if (sublistName !== "Choose Sublist" && sectionName !== "Choose Section") {
+      formattedTitle = `${taskTitle} s-${sublistName}#${sectionName}`;
+    } else if (sublistName !== "Choose Sublist") {
+      formattedTitle = `${taskTitle} s-${sublistName}`;
+    } else if (sectionName !== "Choose Section") {
+      formattedTitle = `${taskTitle} #${sectionName}`;
+    } else {
+      formattedTitle = taskTitle;
+    }
+  } 
+
   const dueDate = dueDateElement.value ? new Date(dueDateElement.value).toISOString() : null;
   const description = descriptionElement.value.trim();
 
@@ -1197,9 +1255,265 @@
     })
     .catch((error) => {
       console.error("Error:", error);
-      alert("An error occurred. Please try again.");
+      console.log("An error occurred. Please try again.");
     });
   });
+   
+
+  let selectedItem = null;
+
+function toggleDropdown() {
+  const dropdown = document.getElementById('dropdown');
+  dropdown.classList.toggle('hidden');
+}
+
+function selectItem(item) {
+  const selectedValue = item.textContent.trim();
+
+  if (selectedItem) {
+    selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
+    const checkmark = selectedItem.querySelector('.checkmark');
+    if (checkmark) {
+      checkmark.remove();
+    }
+  }
+  let subListData;
+  const storedData = localStorage.getItem(`apiData_${baseID}`);
+  if (selectedValue === "Sublists") {
+  console.log("Sublists selected");
+  fetch(`/tasks/subList/all?google_list_id=${baseID}`)
+    .then((response) => response.json())
+    .then((data) => {
+
+      const subListData = data.sublists;
+      const dataContainer = document.getElementById("data-container");
+      if (dataContainer) {
+        dataContainer.innerHTML = "";
+        const parsedData = JSON.parse(storedData);
+
+        if (parsedData && Array.isArray(parsedData.data) && Array.isArray(subListData)) {
+          const rowContainer = document.createElement("div");
+          rowContainer.classList.add("flex", "flex-wrap", "justify-start");
+          dataContainer.appendChild(rowContainer);
+
+          const unmatchedTasks = [...parsedData.data];
+          subListData.forEach((sublist) => {
+            const { sublist_name } = sublist;
+            const groupName = sublist_name?.split(' ')[0].toLowerCase();
+            const sublistContainer = document.createElement("div");
+            sublistContainer.classList.add(
+              "flex",
+              "flex-col",
+              "items-center",
+              "w-1/4",
+              "mb-6"
+            );
+
+            const header = document.createElement("p");
+            header.textContent = groupName;
+            header.classList.add("text-lg", "mb-2");
+            sublistContainer.appendChild(header);
+            const matchedTasks = parsedData.data.filter((dataItem) => {
+              const sublistMatch = dataItem.title.match(/s-(\w+)/);
+              if (sublistMatch && sublistMatch[1].toLowerCase() === groupName) {
+                const index = unmatchedTasks.indexOf(dataItem);
+                if (index !== -1) {
+                  unmatchedTasks.splice(index, 1);
+                }
+                return true;
+              }
+              return false;
+            });
+            if (matchedTasks.length > 0) {
+              matchedTasks.forEach((dataItem) => {
+                const { title, due } = dataItem;
+
+                const taskCard = document.createElement("div");
+                taskCard.classList.add(
+                  "bg-white",
+                  "p-4",
+                  "rounded-lg",
+                  "shadow-sm",
+                  "flex",
+                  "flex-col",
+                  "items-center",
+                  "text-center",
+                  "mb-2",
+                  "w-full"
+                );
+                const cleanTitle = title.replace(/s-/, '');
+                let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
+
+                if (title.includes('#')) {
+                  const section = title.split('#')[1];
+                  cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
+                }
+
+                if (due) {
+                  const dueDate = new Date(due);
+                  const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
+                  cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
+                }
+
+                taskCard.innerHTML = cardContent;
+                sublistContainer.appendChild(taskCard);
+              });
+            } else {
+              const noTasksMessage = document.createElement("div");
+              noTasksMessage.textContent = "No tasks available";
+              noTasksMessage.classList.add("text-md", "text-gray-500", "mt-2");
+              sublistContainer.appendChild(noTasksMessage);
+            }
+            rowContainer.appendChild(sublistContainer);
+          });
+          if (unmatchedTasks.length > 0) {
+            const noSectionContainer = document.createElement("div");
+            noSectionContainer.classList.add(
+              "flex",
+              "flex-col",
+              "items-center",
+              "w-1/4",
+              "mb-6"
+            );
+
+            const noSectionHeader = document.createElement("p");
+            noSectionHeader.textContent = "No Section";
+            noSectionHeader.classList.add("text-lg", "mb-2");
+            noSectionContainer.appendChild(noSectionHeader);
+            unmatchedTasks.forEach((dataItem) => {
+              const { title, due } = dataItem;
+              const taskCard = document.createElement("div");
+              taskCard.classList.add(
+                "bg-white",
+                "p-4",
+                "rounded-lg",
+                "shadow-sm",
+                "flex",
+                "flex-col",
+                "items-center",
+                "text-center",
+                "mb-2",
+                "w-full"
+              );
+              const cleanTitle = title.replace(/s-/, ''); 
+              let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
+
+              if (title.includes('#')) {
+                const section = title.split('#')[1];
+                cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
+              }
+
+              if (due) {
+                const dueDate = new Date(due);
+                const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
+                cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
+              }
+
+              taskCard.innerHTML = cardContent;
+
+              noSectionContainer.appendChild(taskCard);
+            });
+
+            rowContainer.appendChild(noSectionContainer);
+          }
+        }
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching sublists:", error);
+    });
+}
+
+if(selectedValue=='Sections'){
+  displayData(JSON.parse(storedData),Listsections)
+}
+
+if (selectedValue === "Due date") {
+  const storedData = localStorage.getItem(`apiData_${baseID}`);
+  const dataContainer = document.getElementById("data-container");
+
+  if (dataContainer) {
+    dataContainer.innerHTML = ""; 
+    const parsedData = storedData ? JSON.parse(storedData) : [];
+    const tasksWithDueDate = parsedData.data.filter((task) => task.due);
+    const tasksWithoutDueDate = parsedData.data.filter((task) => !task.due);
+    const createTaskCard = (task) => {
+      const taskCard = document.createElement("div");
+      taskCard.classList.add(
+        "bg-white",
+        "p-4",
+        "rounded-lg",
+        "shadow-sm",
+        "text-center",
+        "mb-2"
+      );
+      const sPrefixRegex = /s-([^#\s-]+)/;
+      const hashPrefixRegex = /#([^-\s]+)/;
+      const sMatch = task.title.match(sPrefixRegex);
+      const sValue = sMatch ? sMatch[1].trim() : null;
+      const hashMatch = task.title.match(hashPrefixRegex);
+      const hashValue = hashMatch ? hashMatch[1].trim() : null;
+      let taskName = task.title
+        .replace(sPrefixRegex, "")
+        .replace(hashPrefixRegex, "")
+        .trim();
+
+      const dueDate = task.due ? new Date(task.due) : null;
+      const formattedDate = dueDate
+        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+            dueDate.getMonth() + 1
+          ).padStart(2, "0")}.${dueDate.getFullYear()}`
+        : null;
+      taskCard.innerHTML = `
+        ${taskName ? `<p>${taskName}</p>` : ""}
+        ${sValue ? `<p>${sValue}</p>` : ""}
+        ${hashValue ? `#${hashValue}</p>` : ""}
+        ${formattedDate ? `${formattedDate}</p>` : ""}
+      `;
+      return taskCard;
+    };
+
+    const groupedTasks = tasksWithDueDate.reduce((acc, task) => {
+      const date = new Date(task.due);
+      const shortDate = `${date.getDate()} ${date.toLocaleString("default", {
+        month: "short",
+      })}`;
+      if (!acc[shortDate]) acc[shortDate] = [];
+      acc[shortDate].push(task);
+      return acc;
+    }, {});
+    groupedTasks["No Due Date"] = tasksWithoutDueDate;
+    const dateRow = document.createElement("div");
+    dateRow.classList.add("flex", "justify-between", "gap-4", "mb-4");
+    const taskContainer = document.createElement("div");
+    taskContainer.classList.add("flex", "gap-4");
+    Object.entries(groupedTasks).forEach(([shortDate, tasks]) => {
+      const dateHeader = document.createElement("div");
+      dateHeader.classList.add("w-[22%]");
+      dateHeader.textContent = shortDate;
+      dateRow.appendChild(dateHeader);
+      const taskColumn = document.createElement("div");
+      taskColumn.classList.add("flex", "flex-col", "gap-2", "w-[22%]");
+
+      tasks.forEach((task) => {
+        const taskCard = createTaskCard(task);
+        taskColumn.appendChild(taskCard);
+      });
+
+      taskContainer.appendChild(taskColumn);
+    });
+    dataContainer.appendChild(dateRow);
+    dataContainer.appendChild(taskContainer);
+  }
+}
+  selectedItem = item;
+  selectedItem.classList.add('bg-blue-100', 'text-blue-600');
+
+  const checkmark = document.createElement('span');
+  checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
+  checkmark.textContent = '✓';
+  selectedItem.appendChild(checkmark);
+}
 
     </script>
   </body>
