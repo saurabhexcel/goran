@@ -502,3 +502,32 @@ exports.addList = async (req, res) =>{
         })
     }
  }
+
+ exports.getListTask = async(req,res)=>{
+    try{
+    const tasks = google.tasks({ version: 'v1', auth: oauth2Client });
+
+    const taskListsResponse = await tasks.tasklists.list();
+    const taskLists = taskListsResponse.data.items || [];
+
+    const allData = await Promise.all(
+        taskLists.map(async (taskList) => {
+            const tasksResponse = await tasks.tasks.list({ tasklist: taskList.id });
+            return {
+                taskList: {
+                    id: taskList.id,
+                    title: taskList.title,
+                },
+                tasks: tasksResponse.data.items || [],
+            };
+        })
+    );
+
+    res.status(200).json({ data: allData });
+    }catch(e){
+        console.error("Failed to lists and tasks",e)
+        res.status(500).json({
+            message: "Failed to lists and tasks"
+        })
+    }
+ }
