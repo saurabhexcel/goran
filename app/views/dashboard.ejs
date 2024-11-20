@@ -567,11 +567,11 @@
                 </div>
                    <div 
           class="cursor-pointer text-xl font-bold" 
-          onclick="toggleSubListDropdown()">
-          ...
+          >
+           <span onclick="toggleSubListDropdown()"> ...</span>
         </div>
 
-                  <div id="sublist-container"></div>
+                  <div id="sublist-container"  class="h-[91%] overflow-auto"></div>
 
       `;
 
@@ -617,11 +617,11 @@
                 </div>
                                  <div 
           class="cursor-pointer text-xl font-bold" 
-          onclick="toggleDropdown()">
-          ...
+          >
+         <span onclick="toggleDropdown()"> ...</span>
         </div>
 
-                  <div id="data-container"></div>
+                  <div id="data-container" class="h-[91%] overflow-auto"></div>
 
       `;
             if (storedData) {
@@ -687,7 +687,7 @@
       }
 
       function displayData(data, sectionsArray) {
-        console.log("data============")
+        console.log("data============",data)
         const container = document.getElementById("data-container");
         container.innerHTML = "";
 
@@ -1547,6 +1547,7 @@ if (selectedValue === "Due date") {
   checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
   checkmark.textContent = '✓';
   selectedItem.appendChild(checkmark);
+  toggleDropdown()
 }
 
 
@@ -1721,7 +1722,9 @@ function selectSubListItem(item){
   checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
   checkmark.textContent = '✓';
   selectedItem.appendChild(checkmark);
+  toggleSubListDropdown();
 }
+
     </script>
   </body>
 </html>
