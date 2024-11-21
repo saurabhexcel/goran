@@ -531,3 +531,87 @@ exports.addList = async (req, res) =>{
         })
     }
  }
+
+ exports.getGoogleTaskById = async (req,res) => {
+    try {
+        const { taskListId, taskId } = req.params
+
+        const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
+
+        const response = await tasksApi.tasks.get({
+             tasklist: taskListId,
+             task:taskId
+    });
+    const { title, notes, due, status, webViewLink } = response.data;
+    const normalizedTitle = title.replace(/\s+/g, ' ').trim();
+
+        const sublistMatch = normalizedTitle.match(/s-([^#]*)/);
+        const sectionMatch = normalizedTitle.match(/#(.*)/);
+
+        const sublistTitle = sublistMatch ? sublistMatch[1].trim() : "";
+        const sectionTitle = sectionMatch ? sectionMatch[1].trim() : "";
+
+        // Extract the task name (excluding sublist and section parts)
+        const titleName = normalizedTitle
+            .replace(/s-[^#]*/, '') 
+            .replace(/#.*$/, '')  
+            .trim();
+    const responseData = {
+        titleName: titleName,
+        sublist: sublistTitle,
+        section: sectionTitle,
+        notes: notes,
+        dueDate: due,
+        status: status,
+        webViewLink: webViewLink,
+        taskListId: taskListId,
+    };
+    res.status(200).json({
+        message: 'Tasks retrieved successfully',
+        data: responseData,
+    });
+    }catch (error) {
+        console.error('Error retrieving Google tasks :', error);
+        res.status(500).json({ message: 'Failed to retrieve Google tasks' });
+    }
+}
+
+exports.updateTasks = async (req, res) =>{
+    try{
+        const { taskListId , taskId } = req.params;
+        const { title, notes, due } = req.body;
+        if(!taskListId || !taskId){
+            res.status(400).json({
+                message: "Task list ID and task ID are required."
+            })
+        }
+        const updatedData = {};
+
+        if(title) updatedData.title = title;
+        if(notes) updatedData.notes = notes;
+        if(due) updatedData.due = due;
+
+        if(Object.keys(updatedData).length === 0){
+            return res.status(400).json({
+                 message: "No fields provided to update."
+            });
+          }
+
+          const taskApi = google.tasks({ version :'v1', auth: oauth2Client })
+          const response = await taskApi.tasks.patch({
+             tasklist: taskListId,
+             task: taskId,
+             requestBody: updatedData,
+          });
+          res.status(200).json({
+            message: "Task updated successfully",
+            data: response.data
+          })
+    }catch(error){
+        console.error("Failed to update the  task",error);
+        res.status(500).json({
+            message: "Failed to update the  task",
+            error : error.message
+        })
+    }
+ }

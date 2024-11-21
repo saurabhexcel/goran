@@ -17,6 +17,9 @@ router.get('/googleTasks', verifyToken, taskController.getTasksbyId)
 router.post('/add/list', taskController.addList)
 router.post('/addTask/:tasklistId',taskController.addTask)
 router.get('/listTasks',taskController.getListTask);
+router.get('/googleTaskById/:taskListId/:taskId',taskController.getGoogleTaskById)
+router.patch('/googleTask/:taskListId/:taskId',taskController.updateTasks)
+
 
 // router.get('/gapi/allTask', taskController.listFromGapi);
 
