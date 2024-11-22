@@ -541,6 +541,7 @@
             `;
           }
         }
+        
       let Listsections;
       let listTitle;
       let baseID;
@@ -548,6 +549,7 @@
       let sublistTitle;
       let baselistId;
       function openSection(ids, sublistTitle, listTitle) {
+
         localStorage.setItem("currentsubtitle", sublistTitle);
         localStorage.setItem("currentlisttitle", listTitle);
         const mainContent = document.getElementById("main-content");
@@ -638,6 +640,7 @@
 
       `;
           filterdataByListId(id,Listsections)
+   
 
             // if (storedData) {
             //   // displayData(JSON.parse(storedData), Listsections);
@@ -701,12 +704,21 @@
       //     .catch((error) => console.error("Error fetching data:", error));
       // }
 
-        function filterdataByListId(id, listSections) {
+        function filterdataByListId(id, listSections,call) {
           const getLocaldata = JSON.parse(localStorage.getItem("allListAndTask"));
           if (getLocaldata && getLocaldata.data) {
             const matchedList = getLocaldata.data.find((item) => item.taskList.id === id);
             if (matchedList) {
-              displayData(matchedList.tasks, listSections);
+              const localdata = localStorage.getItem(`apiData_${listTitle}`)
+              console.log(call,localdata,"localdata============")
+              if (localdata === "Sections") {
+               console.log("called by id=====")
+               displayData(matchedList.tasks, listSections);
+               } else if (localdata) {
+                selectItem(localdata);
+               } else {
+                 displayData(matchedList.tasks, listSections);
+              }
             } else {
               console.log("No matching taskList found for the given ID.");
             }
@@ -721,7 +733,17 @@
           if (getLocaldata && getLocaldata.data) {
             const matchedList = getLocaldata.data.find((item) => item.taskList.id === id);
             if (matchedList) {
-              displayLocalData(matchedList.tasks, sublistSections,sublistTitle);
+              let sublistTitle = localStorage.getItem('currentsubtitle') 
+              const localdata = localStorage.getItem(`apiData_${sublistTitle}`)
+              
+              if (localdata === "Sections") {
+               console.log("called by id=====")
+               displayLocalData(matchedList.tasks, sublistSections,sublistTitle);
+               } else if (localdata) {
+                selectSubListItem(localdata)
+               } else {
+                displayLocalData(matchedList.tasks, sublistSections,sublistTitle);
+              }
             } else {
               console.log("No matching taskList found for the given ID.");
             }
@@ -1477,26 +1499,55 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
 
   let selectedItem = null;
 
-function toggleDropdown() {
+  function closeDropdown() {
   const dropdown = document.getElementById('dropdown');
-  dropdown.classList.toggle('hidden');
+  if (dropdown.classList.contains('show')) {
+    dropdown.classList.add('show');
+    dropdown.classList.add('hidden');
+  }
+ 
+}
+
+function toggleDropdown() {
+  console.log( 'adgklsmgklamkl')
+  const dropdown = document.getElementById('dropdown');
+  if (dropdown.classList.contains('hidden')) {
+    dropdown.classList.remove('hidden');
+    dropdown.classList.add('show');
+  }
+
 }
 
 function toggleSubListDropdown(){
   const dropdown = document.getElementById('subdropdown');
-  dropdown.classList.toggle('hidden');
+  if (dropdown.classList.contains('hidden')) {
+    dropdown.classList.remove('hidden');
+    dropdown.classList.add('show');
+  }
 }
 
-function selectItem(item) {
-  const selectedValue = item.textContent.trim();
-
-  if (selectedItem) {
-    selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
-    const checkmark = selectedItem.querySelector('.checkmark');
-    if (checkmark) {
-      checkmark.remove();
-    }
+function closeSublistDropdown() {
+  const dropdown = document.getElementById('subdropdown');
+  if (dropdown.classList.contains('show')) {
+    dropdown.classList.add('show');
+    dropdown.classList.add('hidden');
   }
+}
+function selectItem(item) {
+  console.log(item,"=============")
+  const selectedValue = item.textContent ? item.textContent.trim() : item; 
+  const storageKey = `apiData_${listTitle}`;
+  console.log(storageKey,"storageKeystorageKey")
+  localStorage.setItem(storageKey, selectedValue); 
+  // if (selectedItem) {
+  //   selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
+  //   const checkmark = selectedItem.querySelector('.checkmark');
+  //   if (checkmark) {
+  //     checkmark.remove();
+  //   }
+  // }
+
+  selectedItem = item;
   let subListData;
   const storedData = localStorage.getItem("allListAndTask");
   if (selectedValue === "Sublists") {
@@ -1653,7 +1704,7 @@ function selectItem(item) {
 }
 
 if(selectedValue=='Sections'){
-  filterdataByListId(baseID,Listsections)
+  filterdataByListId(baseID,Listsections,"call")
 }
 
 if (selectedValue === "Due date") {
@@ -1739,27 +1790,17 @@ if (selectedValue === "Due date") {
     dataContainer.appendChild(taskContainer);
   }
 }
-  selectedItem = item;
-  selectedItem.classList.add('bg-blue-100', 'text-blue-600');
-
-  const checkmark = document.createElement('span');
-  checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
-  checkmark.textContent = '✓';
-  selectedItem.appendChild(checkmark);
-  toggleDropdown()
+  
+  closeDropdown()
 }
 
 
 function selectSubListItem(item){
-  const selectedValue = item.textContent.trim();
-
-  if (selectedItem) {
-    selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
-    const checkmark = selectedItem.querySelector('.checkmark');
-    if (checkmark) {
-      checkmark.remove();
-    }
-  }
+  const selectedValue = item.textContent ? item.textContent.trim() : item; 
+  let sublistTitle = localStorage.getItem('currentsubtitle')
+  const storageKey = `apiData_${sublistTitle}`;
+  console.log(storageKey,"selected value ===========")
+  localStorage.setItem(storageKey, selectedValue); 
   const storedData = localStorage.getItem("allListAndTask");
   if (selectedValue === "Sublists") {
   let sublistTitle = localStorage.getItem("currentsubtitle");
@@ -1920,13 +1961,7 @@ function selectSubListItem(item){
 
 
   selectedItem = item;
-  selectedItem.classList.add('bg-blue-100', 'text-blue-600');
-
-  const checkmark = document.createElement('span');
-  checkmark.classList.add('checkmark', 'text-green-500', 'ml-2', 'font-bold');
-  checkmark.textContent = '✓';
-  selectedItem.appendChild(checkmark);
-  toggleSubListDropdown();
+  closeSublistDropdown();
 }
 
 function callAllListAndTask(){
