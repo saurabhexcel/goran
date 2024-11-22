@@ -18,6 +18,10 @@
         transition: max-height 0.5s ease-out;
       }
 
+      .hidden {
+    display: none;
+  }
+
     </style>
   </head>
 
@@ -43,53 +47,54 @@
           <h3 class="font-semibold mb-2">My Projects</h3>
           <nav class="w-full py-4">
             <ul class="space-y-2">
-              <% if (baselists.length> 0) { %> <% baselists.forEach(list=> { %>
-              <li class="nav-item items-center py-1 px-4 rounded-md mb-2">
+              <% if (baselists.length > 0) { %>
+              <% baselists.forEach(list => { %>
+              <li id="list-<%= list.id %>" class="nav-item items-center py-1 px-4 rounded-md mb-2">
                 <div class="flex items-center justify-between">
                   <a
                     href="#"
                     class="block py-2 px-4 rounded flex items-center justify-between hover:bg-gray-100"
                     onclick="addListSection('<%= list.id %>','<%= list.title %>')"
                   >
-                    # <%= list.title %> <% if (basesublists.some(sublist=>
-                    sublist.google_list_id === list.id)) { %>
-                    <svg
-                      class="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                      ></path>
-                    </svg>
-                    <% } %>
+                    # <%= list.title %>
                   </a>
-                  <button onclick="openModal('<%= list.id %>')">
-                    <img src="/images/add.png" class="w-4 h-4" />
-                  </button>
-
+                  <div class="flex gap-2">
+                    <button
+                      class="flex items-center space-x-2"
+                      onclick="openModal('<%= list.id %>')"
+                    >
+                      <img src="/images/add.png" class="w-4 h-4" />
+                    </button>
+          
+                    <% if (basesublists.some(sublist => sublist.google_list_id === list.id)) { %>
+                    <button
+                      id="toggle-icon-<%= list.id %>"
+                      class="flex items-center space-x-2"
+                      onclick="toggleSublist('<%= list.id %>')"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" id="icon-<%= list.id %>" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </svg>
+                    </button>
+                    <% } %>
+                  </div>
                 </div>
-
-
-                <% if (basesublists.some(sublist=> sublist.google_list_id ===
-                list.id)) { %>
-                <ul class="subnav space-y-1">
-                  <% basesublists.filter(basesublist=>
-                  basesublist.google_list_id === list.id).forEach(basesublist =>
-                  { %> <% basesublist.sublists.forEach(sublist=> { %>
+          
+                <% if (basesublists.some(sublist => sublist.google_list_id === list.id)) { %>
+                <ul id="sublist-<%= list.id %>" class="subnav space-y-1 hidden">
+                  <% basesublists
+                    .filter(basesublist => basesublist.google_list_id === list.id)
+                    .forEach(basesublist => {
+                  %>
+                  <% basesublist.sublists.forEach(sublist => { %>
                   <li>
                     <div class="flex items-center justify-between">
                       <a
                         href="#"
-                        onclick="openSection('<%= sublist.sublist_id %>,<%= list.id %>','<%=sublist.sublist_name %>','<%= list.title %>')"
+                        onclick="openSection('<%= sublist.sublist_id %>,<%= list.id %>','<%= sublist.sublist_name %>','<%= list.title %>')"
                         class="block py-1 px-4 rounded"
                       >
-                        <%=sublist.sublist_name %>
+                        <%= sublist.sublist_name %>
                       </a>
                       <form
                         action="/dashboard/delete/<%= basesublist.google_list_id %>"
@@ -97,24 +102,23 @@
                         style="display: inline"
                       >
                         <button type="submit">
-                          <img
-                            title="Delete"
-                            src="/images/minus.png"
-                            class="w-4 h-4"
-                          />
+                          <img title="Delete" src="/images/minus.png" class="w-4 h-4" />
                         </button>
                       </form>
                     </div>
                   </li>
-                  <% }); %> <% }) %>
+                  <% }); %>
+                  <% }); %>
                 </ul>
                 <% } %>
               </li>
-              <% }) %> <% } else { %>
+              <% }); %>
+              <% } else { %>
               <p>No lists available.</p>
               <% } %>
             </ul>
           </nav>
+          
           <div class="flex items-center space-x-1 py-1 px-4">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -521,6 +525,22 @@
         </div>
      
     <script>
+
+      function toggleSublist(listId) {
+          const sublist = document.getElementById(`sublist-${listId}`);
+          const icon = document.getElementById(`icon-${listId}`);
+          if (sublist.classList.contains('hidden')) {
+            sublist.classList.remove('hidden');
+            icon.innerHTML = `
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" w-20 h-20></path>
+            `;
+          } else {
+            sublist.classList.add('hidden');
+            icon.innerHTML = `
+              <polyline points="9 18 15 12 9 6"></polyline>
+            `;
+          }
+        }
       let Listsections;
       let listTitle;
       let baseID;
