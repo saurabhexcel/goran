@@ -445,7 +445,7 @@
 
               <div>
                 <label for="sublist" class="block text-sm font-medium text-gray-700 mb-1">Sublist</label>
-                <select id="sublist" class="w-full px-3 py-2 border rounded-md">
+                <select id="sublist" class="w-full px-3 py-2 border rounded-md" onchange="selectedSublist(this)">
                   <option id="selectedsublist">Choose Sublist</option>
                 </select>
               </div>
@@ -1278,10 +1278,7 @@
   let allListAndSection;
 
 function getListId(selectElement, taskSection, taskSublist) {
-  console.log(selectElement,"selectElementselectElement")
-  // const selectedOption = selectElement.options[selectElement.selectedIndex];
   const selectedValue = selectElement.value || selectElement ;
-  console.log(selectedValue,"selectedValueselectedValue")
   fetch(`/tasks/subList/all?google_list_id=${selectedValue}`)
     .then((response) => response.json())
     .then((data) => {
@@ -1290,22 +1287,42 @@ function getListId(selectElement, taskSection, taskSublist) {
       //Sublist updation 
       const sublistSelect = document.getElementById('sublist');
       sublistSelect.innerHTML = '<option>Choose Sublist</option>';
-
+      let sublistid;
       data.sublists.forEach((sublist) => {
         const option = document.createElement('option');
         option.value = sublist.sublist_id;
         option.textContent = sublist.sublist_name;
 
         if (taskSublist && sublist.sublist_name === taskSublist) {
-          option.selected = true; 
+          option.selected = true;
         }
 
         sublistSelect.appendChild(option);
       });
+      const selectedSublistId = sublistSelect.value;
+      selectedSublist(selectedSublistId, taskSublist, taskSection);
 
         const sectionSelect = document.getElementById('section');
         sectionSelect.innerHTML = '<option>Choose Section</option>'; // Reset dropdown
-
+        const selectedSublistdata = data.sublists.find(
+        (sublist) =>
+          sublist.sublist_id === selectedSublistId ||
+          (taskSublist && sublist.sublist_name === taskSublist)
+      );
+        const hasInvestmentSublist = data.sublists.some(sublist => sublist.sublist_name === taskSublist);
+        if(hasInvestmentSublist){
+          if (selectedSublistdata && selectedSublistdata.sections) {
+        Object.values(selectedSublistdata.sections).forEach((section) => {
+          const option = document.createElement("option");
+          option.value = section.section_id;
+          option.textContent = section.section_name;
+          if (taskSection && section.section_name === taskSection) {
+            option.selected = true;
+          }
+          sectionSelect.appendChild(option);
+        });
+      }
+        }else{
         data.google_list_sections.forEach((section) => {
           const option = document.createElement('option');
           option.value = section.section_id;
@@ -1318,25 +1335,69 @@ function getListId(selectElement, taskSection, taskSublist) {
           sectionSelect.appendChild(option);
         });
 
-        data.sublists.forEach((sublist) => {
-          if (sublist.sections) {
-            const sections = Object.values(sublist.sections);
-            sections.forEach((section) => {
-              const option = document.createElement('option');
-              option.value = section.section_id;
-              option.textContent = section.section_name;
+      }
+        // data.sublists.forEach((sublist) => {
+        //   if (sublist.sections) {
+        //     const sections = Object.values(sublist.sections);
+        //     sections.forEach((section) => {
+        //       const option = document.createElement('option');
+        //       option.value = section.section_id;
+        //       option.textContent = section.section_name;
 
-              if (taskSection && section.section_name === taskSection) {
-                option.selected = true;
-              }
+        //       if (taskSection && section.section_name === taskSection) {
+        //         option.selected = true;
+        //       }
 
-              sectionSelect.appendChild(option);
-            });
-          }
-        });
+        //       sectionSelect.appendChild(option);
+        //     });
+          // }
+        // });
 
     })
     .catch((error) => console.error("Error fetching data:", error));
+}
+
+
+function selectedSublist(selectElementOrId, sublistName = null, sublistSection = null) {
+  const selectedSublistId =
+    typeof selectElementOrId === "object" ? selectElementOrId.value : selectElementOrId;
+
+   const sectionSelect = document.getElementById("section");
+  sectionSelect.innerHTML = '<option>Choose Section</option>';
+  if (allListAndSection) {
+    if (selectedSublistId === "Choose Sublist" || !selectedSublistId) {
+      allListAndSection.google_list_sections.forEach((section) => {
+        const option = document.createElement("option");
+        option.value = section.section_id;
+        option.textContent = section.section_name;
+
+        if (sublistSection && section.section_name === sublistSection) {
+          option.selected = true;
+        }
+
+        sectionSelect.appendChild(option);
+      });
+    } else {
+      const selectedSublist = allListAndSection.sublists.find(
+        (sublist) =>
+          sublist.sublist_id === selectedSublistId ||
+          (sublistName && sublist.sublist_name === sublistName)
+      );
+
+
+      if (selectedSublist && selectedSublist.sections) {
+        Object.values(selectedSublist.sections).forEach((section) => {
+          const option = document.createElement("option");
+          option.value = section.section_id;
+          option.textContent = section.section_name;
+          if (sublistSection && section.section_name === sublistSection) {
+            option.selected = true;
+          }
+          sectionSelect.appendChild(option);
+        });
+      }
+    }
+  }
 }
 
 function configureSaveButton(actionType, taskId = null) {
@@ -1909,6 +1970,10 @@ fetch(`/tasks/googleTaskById/${baseID}/${task.id}`)
   })
   .then((taskData) => {
     getListId(taskData.data.taskListId,taskData.data.section, taskData.data.sublist)
+    // if(taskData.data.sublist){
+    console.log(taskData.data.section,taskData.data.sublist,"taskData.data.section,taskData.data.sublist")
+      // selectedSublist(taskData.data.taskListId,taskData.data.sublist,taskData.data.section)
+    // }
     
     if (taskData) {
       document.querySelector("#formContainer input[type='text']").value = taskData.data.titleName || ''; 
