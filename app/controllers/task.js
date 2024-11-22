@@ -148,13 +148,11 @@ exports.addSublist = async (req, res) => {
 };
 
 
-exports.getAllSublists = async (req, res) => {
+exports.getAllSublistsandListSection = async (req, res) => {
 
     try {
         const { google_list_id } = req.query;
         const {email} = req.decoded;
-
-        // Fetch the user's data from the 'googleUsers' table
         const userData = await knex('googleUsers').where({ email }).first();
 
         if (!userData || !userData.data) {
@@ -163,39 +161,43 @@ exports.getAllSublists = async (req, res) => {
 
         let Udata = null;
         try {
-            // Parse the JSON string if the 'data' column is a JSON string
             Udata = JSON.parse(userData.data);
         } catch (error) {
             return res.status(500).json({ message: 'Error parsing user data' });
         }
-        // Check if the google_list_id exists in the user's data
-        if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
-            return res.status(404).json({ message: 'Google list not found' });
+        const googleLists = Udata.google_lists || {};
+        const listData = googleLists[google_list_id];
+
+        if (!listData) {
+            return res.status(404).json({ message: `Google List ID ${google_list_id} not found` });
         }
 
-        const googleList = Udata.google_lists[google_list_id];
+        const googleListSections = listData.sections ? Object.values(listData.sections) : [];
 
-        // Check if there are sublists under the specified google_list_id
-        if (!googleList.sublists || Object.keys(googleList.sublists).length === 0) {
-            return res.status(404).json({ message: 'No sublists found for this Google list' });
+        const sublist = listData.sublists || {};
+
+        if (Object.keys(sublist).length === 0 && googleListSections.length === 0) {
+            return res.status(404).json({ message: 'No sublists or sections found for this Google list' });
         }
 
-        // Retrieve all sublists under the provided google_list_id
-        const sublists = googleList.sublists;
+        const sublistWithSections = Object.keys(sublist).map(sublistId => ({
+            sublist_id: sublistId,
+            sublist_name: sublist[sublistId].sublist_name,
+            sections: sublist[sublistId].sections,
+        }));
 
-        console.log(sublists);
-
-        // res.render('dashboard', {
-        //     baselists: [],
-        //     basesublists: Object.values(sublists)
-        // });
         res.status(200).json({
-            message: 'Sublists retrieved successfully',
-            sublists: Object.values(sublists) // Convert the sublists object to an array of values
+            message: 'Sublists and sections retrieved successfully',
+            google_list_sections: googleListSections.map(section => ({
+                section_id: section.section_id,
+                section_name: section.section_name,
+            })),
+            sublists: sublistWithSections,
         });
-    } catch (error) {
-        console.error('Error retrieving sublists:', error);
-        res.status(500).json({ message: 'Failed to retrieve sublists' });
+
+    } catch (err) {
+        console.error('Error fetching sublist and sections:', err);
+        return res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
 

@@ -8,7 +8,7 @@ router.get('/', taskController.getTasksList);
 router.get('/list', verifyToken, taskController.getTaskList);
 router.post('/add/subList', verifyToken, taskController.addSublist);
 router.get('/list/all', taskController.getLists);
-router.get('/subList/all', verifyToken, taskController.getAllSublists);
+router.get('/subList/all', verifyToken, taskController.getAllSublistsandListSection);
 router.post('/add/subList/section', verifyToken, taskController.addSublistSections);
 router.get('/subList/section', verifyToken, taskController.getSublistSections);
 router.post('/add/listSection', verifyToken, taskController.addListSection)

@@ -1303,27 +1303,37 @@ function getListId(selectElement, taskSection, taskSublist) {
         sublistSelect.appendChild(option);
       });
 
-      //Section updation 
-      const sectionSelect = document.getElementById('section');
-      sectionSelect.innerHTML = '<option>Choose Section</option>';
+        const sectionSelect = document.getElementById('section');
+        sectionSelect.innerHTML = '<option>Choose Section</option>'; // Reset dropdown
 
-      data.sublists.forEach((sublist) => {
-        if (sublist.sections) {
-          const sections = Object.values(sublist.sections);
-          sections.forEach((section) => {
-            const option = document.createElement('option');
-            option.value = section.section_id;
-            option.textContent = section.section_name;
+        data.google_list_sections.forEach((section) => {
+          const option = document.createElement('option');
+          option.value = section.section_id;
+          option.textContent = section.section_name;
 
-            if (taskSection && section.section_name === taskSection) {
-              option.selected = true; 
-            }
+          if (taskSection && section.section_name === taskSection) {
+            option.selected = true;
+          }
 
-            sectionSelect.appendChild(option);
-          });
-        }
-      });
+          sectionSelect.appendChild(option);
+        });
 
+        data.sublists.forEach((sublist) => {
+          if (sublist.sections) {
+            const sections = Object.values(sublist.sections);
+            sections.forEach((section) => {
+              const option = document.createElement('option');
+              option.value = section.section_id;
+              option.textContent = section.section_name;
+
+              if (taskSection && section.section_name === taskSection) {
+                option.selected = true;
+              }
+
+              sectionSelect.appendChild(option);
+            });
+          }
+        });
 
     })
     .catch((error) => console.error("Error fetching data:", error));
