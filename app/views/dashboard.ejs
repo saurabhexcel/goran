@@ -45,6 +45,11 @@
         
         <div class="mt-6">
           <h3 class="font-semibold mb-2">My Projects</h3>
+          <div class="flex flex-col gap-2">
+            <button id="today-button" class="text-left">Today</button>
+            <button id="tomorrow-button" class="text-left">Tomorrow</button>
+           </div>
+
           <nav class="w-full py-4">
             <ul class="space-y-2">
               <% if (baselists.length > 0) { %>
@@ -155,6 +160,7 @@
 
       <!-- Main Content -->
       <div class="flex-1 p-8" id="main-content">
+
         <h1 class="text-3xl font-bold mb-4">Today</h1>
         <p class="text-gray-600 mb-6">3 tasks</p>
 
@@ -744,7 +750,6 @@
               const localdata = localStorage.getItem(`apiData_${sublistTitle}`)
               
               if (localdata === "Sections") {
-               console.log("called by id=====")
                displayLocalData(matchedList.tasks, sublistSections,sublistTitle);
                } else if (localdata) {
                 selectSubListItem(localdata)
@@ -1519,7 +1524,6 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
 }
 
 function toggleDropdown() {
-  console.log( 'adgklsmgklamkl')
   const dropdown = document.getElementById('dropdown');
   if (dropdown.classList.contains('hidden')) {
     dropdown.classList.remove('hidden');
@@ -1544,24 +1548,15 @@ function closeSublistDropdown() {
   }
 }
 function selectItem(item) {
-  console.log(item,"=============")
   const selectedValue = item.textContent ? item.textContent.trim() : item; 
   const storageKey = `apiData_${listTitle}`;
-  console.log(storageKey,"storageKeystorageKey")
   localStorage.setItem(storageKey, selectedValue); 
-  // if (selectedItem) {
-  //   selectedItem.classList.remove('bg-blue-100', 'text-blue-600');
-  //   const checkmark = selectedItem.querySelector('.checkmark');
-  //   if (checkmark) {
-  //     checkmark.remove();
-  //   }
-  // }
+
 
   selectedItem = item;
   let subListData;
   const storedData = localStorage.getItem("allListAndTask");
   if (selectedValue === "Sublists") {
-  console.log("Sublists selected");
   fetch(`/tasks/subList/all?google_list_id=${baseID}`)
     .then((response) => response.json())
     .then((data) => {
@@ -1725,7 +1720,6 @@ if (selectedValue === "Due date") {
     dataContainer.innerHTML = "";
     const parsedData = storedData ? JSON.parse(storedData) : [];
     const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
-    console.log(matchedList,"matchedListmatchedList")
     const tasksWithDueDate = matchedList.tasks.filter((task) => task.due);
     const tasksWithoutDueDate = matchedList.tasks.filter((task) => !task.due);
     const createTaskCard = (task) => {
@@ -1809,7 +1803,6 @@ function selectSubListItem(item){
   const selectedValue = item.textContent ? item.textContent.trim() : item; 
   let sublistTitle = localStorage.getItem('currentsubtitle')
   const storageKey = `apiData_${sublistTitle}`;
-  console.log(storageKey,"selected value ===========")
   localStorage.setItem(storageKey, selectedValue); 
   const storedData = localStorage.getItem("allListAndTask");
   if (selectedValue === "Sublists") {
@@ -1837,10 +1830,14 @@ function selectSubListItem(item){
         dataContainer.appendChild(rowContainer);
         filteredTasks.forEach((task) => {
           const title = task.title || "";
-          const taskName = title.split(" ")[0] || "Unknown";
+          
+          const taskNameMatch = title.match(/^([^\s]+(?:\s+[^\s]+)*)\s+s-/);
+          const taskName = taskNameMatch ? taskNameMatch[1] : "Unknown";
+          
           const [prefix, section] = title.split("#");
-          const prefixValue = prefix.split("s-")[1]?.trim() || "";
+          const prefixValue = prefix?.split("s-")[1]?.trim() || "";
           const sectionValue = section?.trim() || "";
+
           let dueDate = task.due || "";
           if (dueDate) {
             const date = new Date(dueDate);
@@ -1848,10 +1845,12 @@ function selectSubListItem(item){
               .toString()
               .padStart(2, "0")}/${date.getFullYear()}`;
           }
+
           const card = document.createElement("div");
           card.classList.add("bg-white", "p-4", "m-2", "border", "shadow-lg", "w-[25%]", "rounded-md","flex","flex-col","items-center","w-[200px]");
+          
           let cardContent = "";
-          if (taskName) cardContent += `<p>${taskName}</p>`;
+          if (taskName) cardContent += `<p>${taskName}</p>`;  // Full task name
           if (prefixValue) cardContent += `<p>s-${prefixValue}</p>`;
           if (sectionValue) cardContent += `<p>#${sectionValue}</p>`;
           if (dueDate) cardContent += `<p>${dueDate}</p>`;
@@ -1859,6 +1858,7 @@ function selectSubListItem(item){
           card.addEventListener("click", () => openTaskModal(task));
           rowContainer.appendChild(card);
         });
+
       } else {
         const message = document.createElement("p");
         message.textContent = "No tasks found for the selected sublist.";
@@ -1881,7 +1881,6 @@ function selectSubListItem(item){
   if (dataContainer) {
     dataContainer.innerHTML = "";
     const parsedData = JSON.parse(storedData);
-    console.log(parsedData, "parsed data");
     if (parsedData && Array.isArray(parsedData.data)) {
       const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
       const filteredTasks = matchedList.tasks.filter((item) => {
@@ -1895,11 +1894,12 @@ function selectSubListItem(item){
       filteredTasks.forEach((task) => {
         if (task.due) {
           const date = new Date(task.due);
-          const fullDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}/${date.getFullYear()}`;
+          const fullDate = `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}.${date.getFullYear()}`;
 
-          const shortDate = `${date.getDate().toString().padStart(2, "0")} ${date.toLocaleString('en-us', { month: 'short' })}`;
+           const shortDate = `${date.getDate().toString().padStart(2, "0")} ${date.toLocaleString('en-us', { month: 'short' })}`;
+
           if (!tasksByDate[fullDate]) {
             tasksByDate[fullDate] = [];
           }
@@ -1922,7 +1922,9 @@ function selectSubListItem(item){
         dateSection.appendChild(header);
         tasksWithDate.forEach(({ task }) => {
           const title = task.title || "";
-          const taskName = title.split(" ")[0] || "Unknown";
+          // const taskName = title.split(" ")[0] || "Unknown";
+          const taskNameMatch = title.match(/^([^\s]+(?:\s+[^\s]+)*)\s+s-/);
+          const taskName = taskNameMatch ? taskNameMatch[1] : "Unknown";
 
           const [prefix, section] = title.split("#");
           const prefixValue = prefix.split("s-")[1]?.trim() || "";
@@ -1950,7 +1952,9 @@ function selectSubListItem(item){
         noDueDateSection.appendChild(noDueDateHeader);
         noDueDateTasks.forEach((task) => {
           const title = task.title || "";
-          const taskName = title.split(" ")[0] || "Unknown";
+          // const taskName = title.split(" ")[0] || "Unknown";
+          const taskNameMatch = title.match(/^([^\s]+(?:\s+[^\s]+)*)\s+s-/);
+          const taskName = taskNameMatch ? taskNameMatch[1] : "Unknown";
           const [prefix, section] = title.split("#");
           const prefixValue = prefix.split("s-")[1]?.trim() || "";
           const sectionValue = section?.trim() || "";
@@ -2040,11 +2044,7 @@ fetch(`/tasks/googleTaskById/${baseID}/${task.id}`)
   })
   .then((taskData) => {
     getListId(taskData.data.taskListId,taskData.data.section, taskData.data.sublist)
-    // if(taskData.data.sublist){
-    console.log(taskData.data.section,taskData.data.sublist,"taskData.data.section,taskData.data.sublist")
-      // selectedSublist(taskData.data.taskListId,taskData.data.sublist,taskData.data.section)
-    // }
-    
+ 
     if (taskData) {
       document.querySelector("#formContainer input[type='text']").value = taskData.data.titleName || ''; 
       document.querySelector("#dueDate").value = taskData.data.dueDate ? taskData.data.dueDate.split('T')[0] : '';
@@ -2071,12 +2071,127 @@ fetch(`/tasks/googleTaskById/${baseID}/${task.id}`)
     console.error("Error fetching data:", error);
   });
 
-// Show the modal
 document.getElementById("formContainer").classList.remove("hidden");
 
 }
+ 
+function formatISODateToDDMMYYYY(isoDate) {
+  const date = new Date(isoDate);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+function getTodayDate(value) {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+function getTomorrowDate() {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const day = String(tomorrow.getDate()).padStart(2, "0");
+  const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
+  const year = tomorrow.getFullYear();
+  return `${day}.${month}.${year}`;
+}
 
 
+function filterTasks(dateToFilter,value) {
+  const localData = localStorage.getItem("allListAndTask");
+
+  if (!localData) {
+    console.error("No data found in localStorage with key 'allListAndTask'");
+    return;
+  }
+
+  const parsedData = JSON.parse(localData);
+
+  const filteredTasks = [];
+  const allTasks = parsedData.data.flatMap((item) => item.tasks);
+
+
+  allTasks.forEach((task) => {
+    if (task.due) {
+      const dueDateFormatted = formatISODateToDDMMYYYY(task.due);
+
+      if (dueDateFormatted === dateToFilter) {
+
+        const sublistMatch = task.title.match(/s-([^\s#]+)/);
+        const sectionMatch = task.title.match(/#(\S+)/);
+        let taskName = task.title;
+        taskName = taskName.replace(/s-[^\s#]+/, "").replace(/#\S+/, "").trim();
+        filteredTasks.push({
+          taskName,
+          sublist: sublistMatch ? sublistMatch[1] : "",
+          section: sectionMatch ? sectionMatch[1] : "",
+          dueDate: dueDateFormatted,
+        });
+      }
+    }
+  });
+
+  renderTasks(filteredTasks,value);
+}
+
+function renderTasks(tasks,value) {
+  
+  const mainContent = document.getElementById("main-content");
+
+  mainContent.innerHTML = `
+   <h1 class="py-4 font-bold text-xl">${value}</h1>
+    <div id="value-container" class="h-[99%] overflow-auto"></div>
+  `;
+
+  let container = document.getElementById("value-container");
+
+  if (tasks.length === 0) {
+    const noDataMessage = document.createElement("div");
+    noDataMessage.className = "no-data-message";
+    noDataMessage.style.padding = "16px";
+    noDataMessage.style.border = "1px solid #ddd";
+    noDataMessage.style.borderRadius = "8px";
+    noDataMessage.style.backgroundColor = "#f8f8f8";
+    noDataMessage.style.color = "gray";
+    noDataMessage.style.textAlign = "center";
+    noDataMessage.innerHTML = "No data exists for this due date";
+
+    container.appendChild(noDataMessage);
+  } else {
+    tasks.forEach((task) => {
+
+      const card = document.createElement("div");
+      card.className = "card bg-white";
+      card.style.border = "1px solid #ddd";
+      card.style.padding = "16px";
+      card.style.marginBottom = "8px";
+      card.style.borderRadius = "8px";
+
+      card.innerHTML = `
+        <h3 style="font-size: 1em; font-weight: bold;">${task.taskName}</h3>
+        <p style="color: gray;">${task.section}</p>
+        <p style="color: gray;">${task.sublist}</p>
+        <p style="color: gray;">${task.dueDate}</p>
+      `;
+
+      container.appendChild(card);
+    });
+  }
+}
+
+document.getElementById("today-button").addEventListener("click", () => {
+  const todayDate = getTodayDate();
+  filterTasks(todayDate,"Today Task");
+});
+
+document.getElementById("tomorrow-button").addEventListener("click", () => {
+  const yesterdayDate = getTomorrowDate();
+  filterTasks(yesterdayDate,"Tomorrow Task");
+});
 
 
     </script>
