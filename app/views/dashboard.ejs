@@ -556,6 +556,7 @@
         const [sublistId, baselistId] = ids.split(",");
         baseListID = baselistId;
         console.log(baseListID,"baseListIDs")
+      
         fetch(
           `/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`
         )
@@ -594,6 +595,8 @@
                   <div id="sublist-container"  class="h-[91%] overflow-auto"></div>
 
       `;
+      const currentView = 'sublist'; // Determine if it's list or sublist view
+      localStorage.setItem('currentView', currentView);
           filterdataBySublist(baselistId,sections,sublistTitle)
             // if (storedData) {
             //   // displayLocalData(JSON.parse(storedData), sections, sublistTitle);
@@ -639,6 +642,9 @@
                   <div id="data-container" class="h-[91%] overflow-auto"></div>
 
       `;
+
+      const currentView = 'list'; // Determine if it's list or sublist view
+      localStorage.setItem('currentView', currentView);
           filterdataByListId(id,Listsections)
    
 
@@ -704,13 +710,14 @@
       //     .catch((error) => console.error("Error fetching data:", error));
       // }
 
-        function filterdataByListId(id, listSections,call) {
+        function filterdataByListId(id, listSections) {
           const getLocaldata = JSON.parse(localStorage.getItem("allListAndTask"));
+          console.log(getLocaldata,id,"=====getLocaldata===========")
           if (getLocaldata && getLocaldata.data) {
             const matchedList = getLocaldata.data.find((item) => item.taskList.id === id);
             if (matchedList) {
               const localdata = localStorage.getItem(`apiData_${listTitle}`)
-              console.log(call,localdata,"localdata============")
+              console.log(localdata,"localdata============")
               if (localdata === "Sections") {
                console.log("called by id=====")
                displayData(matchedList.tasks, listSections);
@@ -1431,7 +1438,7 @@ function configureSaveButton(actionType, taskId = null) {
     saveButton.removeAttribute("data-task-id");
   }
 }
-
+let listId;
 document.getElementById("saveButton").addEventListener("click", function (e) {
   e.preventDefault();
 
@@ -1442,7 +1449,7 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
   const sectionElement = document.getElementById("section");
   const dueDateElement = document.getElementById("dueDate");
   const descriptionElement = document.getElementById("description");
-  const listId = listElement.value;
+  listId = listElement.value;
   const sublistName = sublistElement.options[sublistElement.selectedIndex].text.trim();
   const sectionName = sectionElement.options[sectionElement.selectedIndex].text.trim();
 
@@ -1491,11 +1498,14 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
     .then((response) => response.json())
     .then((data) => {
       closeForm();
+      callAllListAndTask();
     })
+
     .catch((error) => {
       console.error("Error:", error);
     });
 });
+
 
   let selectedItem = null;
 
@@ -1704,7 +1714,7 @@ function selectItem(item) {
 }
 
 if(selectedValue=='Sections'){
-  filterdataByListId(baseID,Listsections,"call")
+  filterdataByListId(baseID,Listsections)
 }
 
 if (selectedValue === "Due date") {
@@ -1964,19 +1974,44 @@ function selectSubListItem(item){
   closeSublistDropdown();
 }
 
-function callAllListAndTask(){
-        const storageKey = 'allListAndTask';
 
-        localStorage.removeItem(storageKey);
-        fetch(`/tasks/listTasks`)
-          .then((response) => response.json())
-          .then((data) => {
-            localStorage.setItem(storageKey, JSON.stringify(data))
+function callAllListAndTask() {
+  const storageKey = 'allListAndTask';
 
-          })
-        .catch((error) => console.error("Error fetching data:", error));
+  localStorage.removeItem(storageKey);
   
+  fetch(`/tasks/listTasks`)
+    .then((response) => response.json())
+    .then((data) => {
+      const UpdatedTaskData = data;
+      localStorage.setItem(storageKey, JSON.stringify(data));
+
+      saveUpdatedDataToLocalStorage(UpdatedTaskData).then(() => {
+        const currentView = localStorage.getItem('currentView'); 
+        if(currentView=='list'){
+          filterdataByListId(listId, Listsections);
+
+        }else if(currentView=='sublist'){
+        let sublistTitle = localStorage.getItem("currentsubtitle");
+
+        if(sublistTitle){
+          filterdataBySublist(baseListID,sections,sublistTitle)
+
+        }
+        }
+       
+      });
+    })
+    .catch((error) => console.error("Error fetching data:", error));
 }
+
+function saveUpdatedDataToLocalStorage(updatedData) {
+  return new Promise((resolve) => {
+    localStorage.setItem("allListAndTask", JSON.stringify(updatedData));
+    resolve();
+  });
+}
+
 let taskLists;
 let taskID;
 function openTaskModal(task) {
