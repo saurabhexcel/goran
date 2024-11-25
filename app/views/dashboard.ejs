@@ -2110,78 +2110,95 @@ function filterTasks(dateToFilter,value) {
   }
 
   const parsedData = JSON.parse(localData);
+  const filteredData = [];
 
-  const filteredTasks = [];
-  const allTasks = parsedData.data.flatMap((item) => item.tasks);
+  parsedData.data.forEach((list) => {
+    const { taskList, tasks } = list;
+    const matchingTasks = [];
+    tasks.forEach((task) => {
+      if (task.due) {
+        const dueDateFormatted = formatISODateToDDMMYYYY(task.due);
 
+        if (dueDateFormatted === dateToFilter) {
+          const sublistMatch = task.title.match(/s-([^\s#]+)/);
+          const sectionMatch = task.title.match(/#(\S+)/);
+          let taskName = task.title;
+          taskName = taskName.replace(/s-[^\s#]+/, "").replace(/#\S+/, "").trim();
 
-  allTasks.forEach((task) => {
-    if (task.due) {
-      const dueDateFormatted = formatISODateToDDMMYYYY(task.due);
-
-      if (dueDateFormatted === dateToFilter) {
-
-        const sublistMatch = task.title.match(/s-([^\s#]+)/);
-        const sectionMatch = task.title.match(/#(\S+)/);
-        let taskName = task.title;
-        taskName = taskName.replace(/s-[^\s#]+/, "").replace(/#\S+/, "").trim();
-        filteredTasks.push({
-          taskName,
-          sublist: sublistMatch ? sublistMatch[1] : "",
-          section: sectionMatch ? sectionMatch[1] : "",
-          dueDate: dueDateFormatted,
-        });
+          matchingTasks.push({
+            taskName,
+            sublist: sublistMatch ? sublistMatch[1] : "",
+            section: sectionMatch ? sectionMatch[1] : "",
+            dueDate: dueDateFormatted,
+          });
+        }
       }
+    });
+
+    if (matchingTasks.length > 0) {
+      filteredData.push({
+        listName: taskList.title,
+        tasks: matchingTasks,
+      });
     }
   });
 
-  renderTasks(filteredTasks,value);
+  renderTasks(filteredData,value);
 }
 
-function renderTasks(tasks,value) {
-  
-  const mainContent = document.getElementById("main-content");
+function renderTasks(filteredData,value) {
+      const mainContent = document.getElementById("main-content");
 
-  mainContent.innerHTML = `
-   <h1 class="py-4 font-bold text-xl">${value}</h1>
-    <div id="value-container" class="h-[99%] overflow-auto"></div>
-  `;
+      mainContent.innerHTML = 
+      `<h1 class="py-4 font-bold text-xl">${value}</h1>
+        <div id="value-container" class="h-[99%] overflow-auto"></div>`
+      ;
 
-  let container = document.getElementById("value-container");
+      let container = document.getElementById("value-container");
 
-  if (tasks.length === 0) {
-    const noDataMessage = document.createElement("div");
-    noDataMessage.className = "no-data-message";
-    noDataMessage.style.padding = "16px";
-    noDataMessage.style.border = "1px solid #ddd";
-    noDataMessage.style.borderRadius = "8px";
-    noDataMessage.style.backgroundColor = "#f8f8f8";
-    noDataMessage.style.color = "gray";
-    noDataMessage.style.textAlign = "center";
-    noDataMessage.innerHTML = "No data exists for this due date";
+        if (filteredData.length === 0) {
+          const noDataMessage = document.createElement("div");
+          noDataMessage.className =
+            "p-4 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 text-center";
+          noDataMessage.innerHTML = "No tasks match the selected due date";
 
-    container.appendChild(noDataMessage);
-  } else {
-    tasks.forEach((task) => {
+          container.appendChild(noDataMessage);
+        } else {
+          const gridContainer = document.createElement("div");
+          gridContainer.className =
+            "flex gap-4 flex-wrap";
+          filteredData.forEach((data) => {
+            const columnContainer = document.createElement("div");
+            columnContainer.className = "flex flex-col w-[200px]";
 
-      const card = document.createElement("div");
-      card.className = "card bg-white";
-      card.style.border = "1px solid #ddd";
-      card.style.padding = "16px";
-      card.style.marginBottom = "8px";
-      card.style.borderRadius = "8px";
+            const header = document.createElement("h2");
+            header.className = "font-bold text-lg mb-4";
+            header.innerHTML = data.listName;
 
-      card.innerHTML = `
-        <h3 style="font-size: 1em; font-weight: bold;">${task.taskName}</h3>
-        <p style="color: gray;">${task.section}</p>
-        <p style="color: gray;">${task.sublist}</p>
-        <p style="color: gray;">${task.dueDate}</p>
-      `;
+            columnContainer.appendChild(header);
 
-      container.appendChild(card);
-    });
-  }
+            data.tasks.forEach((task) => {
+              const card = document.createElement("div");
+              card.className =
+                "bg-white border border-gray-300 p-4 mb-2 rounded-lg shadow-sm h-[130px]";
+
+              card.innerHTML = `
+                <h3 class="text-base font-bold mb-2">${task.taskName}</h3>
+                <p class="text-sm text-gray-500">${task.sublist || ""}</p>
+                <p class="text-sm text-gray-500">${task.section || ""}</p>
+                <p class="text-sm text-gray-500">${task.dueDate}</p>
+              `;
+
+              columnContainer.appendChild(card);
+            });
+
+            gridContainer.appendChild(columnContainer);
+          });
+
+          container.appendChild(gridContainer);
+        }
 }
+
 
 document.getElementById("today-button").addEventListener("click", () => {
   const todayDate = getTodayDate();
