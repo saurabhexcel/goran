@@ -99,47 +99,46 @@ exports.callbackFunction = async (req, res) => {
         const { code } = req.query;
 
         if (!code) {
-            // If no code is provided in the query string, redirect or send an error response.
             return res.status(400).send("Authorization code is missing");
         }
 
         const { tokens } = await oauth2Client.getToken(code);
         oauth2Client.setCredentials(tokens);
 
-        // Get user info
         const oauth2 = google.oauth2({ auth: oauth2Client, version: 'v2' });
         const userInfo = await oauth2.userinfo.get();
-
         const email = userInfo.data.email;
-        console.log(email);
 
-        const userData = await knex('googleUsers').where({ email: email }).first();
-        if(!userData){
-            try {
-                // Optionally, save the user info to the database if needed
-               await knex('googleUsers')
-               .insert({ email, data:{} }) // or update as necessary
+        let userData = await knex('googleUsers').where({ email }).first();
 
-            } catch (error) {
-               res.status(500).send("failed to store in DB");
-            }
+        if (!userData) {
+            // New user, save email and tokens
+            await knex('googleUsers').insert({
+                email,
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                data: JSON.stringify({}),
+            });
+        } else {
+            // Existing user, update tokens
+            await knex('googleUsers')
+                .where({ email })
+                .update({
+                    access_token: tokens.access_token,
+                    refresh_token: tokens.refresh_token || userData.refresh_token, // Save only if refresh_token is provided
+                });
         }
 
-        // Store the email in the JWT for later access
-        const token = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
-        res.cookie('jwt', token);
-
-        // Redirect to the desired route after successful authentication
+        const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
+        res.cookie('jwt', jwtToken);
         res.redirect('/tasks/list');
 
     } catch (error) {
-
         console.error("Error during Google OAuth callback:", error);
-
-        // Redirect or send a response in case of an error
         res.status(500).send("Authentication failed. Please try again.");
     }
-}
+};
+
 
 exports.login = async (req, res) => {
 

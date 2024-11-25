@@ -21,7 +21,26 @@ exports.getTasksList = async (req, res) => {
 
 exports.getTaskList = async (req, res) => {
     try {
-        const {email} = req.decoded;
+        const { email } = req.decoded;
+        let uData = await knex('googleUsers').where({ email }).first();
+
+        if (!uData) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Set tokens in oauth2Client, refreshing if access token is missing or expired
+        oauth2Client.setCredentials({
+            access_token: uData.access_token,
+            refresh_token: uData.refresh_token,
+        });
+
+        oauth2Client.on('tokens', async (tokens) => {
+            if (tokens.access_token) {
+                // Update the access token in the database
+                await knex('googleUsers').where({ email }).update({ access_token: tokens.access_token });
+            }
+        });
+
 
         // Initialize Google API client
         const tasksApi = google.tasks({ version: 'v1', auth: oauth2Client });
@@ -555,8 +574,8 @@ exports.addList = async (req, res) =>{
 
         // Extract the task name (excluding sublist and section parts)
         const titleName = normalizedTitle
-            .replace(/s-[^#]*/, '') 
-            .replace(/#.*$/, '')  
+            .replace(/s-[^#]*/, '')
+            .replace(/#.*$/, '')
             .trim();
     const responseData = {
         titleName: titleName,
