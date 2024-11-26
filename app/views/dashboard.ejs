@@ -1556,244 +1556,244 @@ function selectItem(item) {
   selectedItem = item;
   let subListData;
   const storedData = localStorage.getItem("allListAndTask");
-  if (selectedValue === "Sublists") {
-  fetch(`/tasks/subList/all?google_list_id=${baseID}`)
-    .then((response) => response.json())
-    .then((data) => {
+    if (selectedValue === "Sublists") {
+      fetch(`/tasks/subList/all?google_list_id=${baseID}`)
+        .then((response) => response.json())
+        .then((data) => {
 
-      const subListData = data.sublists;
-      const dataContainer = document.getElementById("data-container");
-      if (dataContainer) {
-        dataContainer.innerHTML = "";
-        const parsedData = JSON.parse(storedData);
+          const subListData = data.sublists;
+          const dataContainer = document.getElementById("data-container");
+          if (dataContainer) {
+            dataContainer.innerHTML = "";
+            const parsedData = JSON.parse(storedData);
 
-        if (parsedData && Array.isArray(parsedData.data) && Array.isArray(subListData)) {
-          const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
+            if (parsedData && Array.isArray(parsedData.data) && Array.isArray(subListData)) {
+              const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
 
-          const rowContainer = document.createElement("div");
-          rowContainer.classList.add("flex", "flex-wrap", "justify-start","gap-4");
-          dataContainer.appendChild(rowContainer);
+              const rowContainer = document.createElement("div");
+              rowContainer.classList.add("flex", "flex-wrap", "justify-start","gap-4");
+              dataContainer.appendChild(rowContainer);
 
-          const unmatchedTasks = [...matchedList.tasks];
-          subListData.forEach((sublist) => {
-            const { sublist_name } = sublist;
-            const groupName = sublist_name?.split(' ')[0].toLowerCase();
-            const sublistContainer = document.createElement("div");
-            sublistContainer.classList.add(
-              "flex",
-              "flex-col",
-              "items-center",
-              "w-1/5",
-              "mb-6"
-            );
-
-            const header = document.createElement("p");
-            header.textContent = groupName;
-            header.classList.add("text-lg", "mb-2");
-            sublistContainer.appendChild(header);
-            const matchedTasks = matchedList.tasks.filter((dataItem) => {
-              const sublistMatch = dataItem.title.match(/s-(\w+)/);
-              if (sublistMatch && sublistMatch[1].toLowerCase() === groupName) {
-                const index = unmatchedTasks.indexOf(dataItem);
-                if (index !== -1) {
-                  unmatchedTasks.splice(index, 1);
-                }
-                return true;
-              }
-              return false;
-            });
-            if (matchedTasks.length > 0) {
-              matchedTasks.forEach((dataItem) => {
-                const { title, due } = dataItem;
-
-                const taskCard = document.createElement("div");
-                taskCard.classList.add(
-                  "bg-white",
-                  "p-4",
-                  "rounded-lg",
-                  "shadow-sm",
+              const unmatchedTasks = [...matchedList.tasks];
+              subListData.forEach((sublist) => {
+                const { sublist_name } = sublist;
+                const groupName = sublist_name?.split(' ')[0].toLowerCase();
+                const sublistContainer = document.createElement("div");
+                sublistContainer.classList.add(
                   "flex",
                   "flex-col",
                   "items-center",
-                  "text-center",
-                  "mb-2",
-                  "w-full"
+                  "w-1/5",
+                  "mb-6"
                 );
-                const cleanTitle = title.replace(/s-/, '');
-                let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
 
-                if (title.includes('#')) {
-                  const section = title.split('#')[1];
-                  cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
-                }
-
-                if (due) {
-                  const dueDate = new Date(due);
-                  const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
-                  cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
-                }
-
-                taskCard.innerHTML = cardContent;
-                taskCard.addEventListener("click", () => {
-                openTaskModal(dataItem);
+                const header = document.createElement("p");
+                header.textContent = groupName;
+                header.classList.add("text-lg", "mb-2");
+                sublistContainer.appendChild(header);
+                const matchedTasks = matchedList.tasks.filter((dataItem) => {
+                  const sublistMatch = dataItem.title.match(/s-(\w+)/);
+                  if (sublistMatch && sublistMatch[1].toLowerCase() === groupName) {
+                    const index = unmatchedTasks.indexOf(dataItem);
+                    if (index !== -1) {
+                      unmatchedTasks.splice(index, 1);
+                    }
+                    return true;
+                  }
+                  return false;
                 });
-                sublistContainer.appendChild(taskCard);
+                if (matchedTasks.length > 0) {
+                  matchedTasks.forEach((dataItem) => {
+                    const { title, due } = dataItem;
+
+                    const taskCard = document.createElement("div");
+                    taskCard.classList.add(
+                      "bg-white",
+                      "p-4",
+                      "rounded-lg",
+                      "shadow-sm",
+                      "flex",
+                      "flex-col",
+                      "items-center",
+                      "text-center",
+                      "mb-2",
+                      "w-full"
+                    );
+                    const cleanTitle = title.replace(/s-/, '');
+                    let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
+
+                    if (title.includes('#')) {
+                      const section = title.split('#')[1];
+                      cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
+                    }
+
+                    if (due) {
+                      const dueDate = new Date(due);
+                      const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
+                      cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
+                    }
+
+                    taskCard.innerHTML = cardContent;
+                    taskCard.addEventListener("click", () => {
+                    openTaskModal(dataItem);
+                    });
+                    sublistContainer.appendChild(taskCard);
+                  });
+                } else {
+                  const noTasksMessage = document.createElement("div");
+                  noTasksMessage.textContent = "No tasks available";
+                  noTasksMessage.classList.add("text-md", "text-gray-500", "mt-2");
+                  sublistContainer.appendChild(noTasksMessage);
+                }
+                rowContainer.appendChild(sublistContainer);
               });
-            } else {
-              const noTasksMessage = document.createElement("div");
-              noTasksMessage.textContent = "No tasks available";
-              noTasksMessage.classList.add("text-md", "text-gray-500", "mt-2");
-              sublistContainer.appendChild(noTasksMessage);
+              if (unmatchedTasks.length > 0) {
+                const noSectionContainer = document.createElement("div");
+                noSectionContainer.classList.add(
+                  "flex",
+                  "flex-col",
+                  "items-center",
+                  "w-1/5",
+                  "mb-6"
+                );
+
+                const noSectionHeader = document.createElement("p");
+                noSectionHeader.textContent = "No Section";
+                noSectionHeader.classList.add("text-lg", "mb-2");
+                noSectionContainer.appendChild(noSectionHeader);
+                unmatchedTasks.forEach((dataItem) => {
+                  const { title, due } = dataItem;
+                  const taskCard = document.createElement("div");
+                  taskCard.classList.add(
+                    "bg-white",
+                    "p-4",
+                    "rounded-lg",
+                    "shadow-sm",
+                    "flex",
+                    "flex-col",
+                    "items-center",
+                    "text-center",
+                    "mb-2",
+                    "w-full"
+                  );
+                  const cleanTitle = title.replace(/s-/, '');
+                  let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
+
+                  if (title.includes('#')) {
+                    const section = title.split('#')[1];
+                    cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
+                  }
+
+                  if (due) {
+                    const dueDate = new Date(due);
+                    const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
+                    cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
+                  }
+
+                  taskCard.innerHTML = cardContent;
+                  taskCard.addEventListener("click", () => {
+                  openTaskModal(dataItem);
+                  });
+
+                  noSectionContainer.appendChild(taskCard);
+                });
+
+                rowContainer.appendChild(noSectionContainer);
+              }
             }
-            rowContainer.appendChild(sublistContainer);
-          });
-          if (unmatchedTasks.length > 0) {
-            const noSectionContainer = document.createElement("div");
-            noSectionContainer.classList.add(
-              "flex",
-              "flex-col",
-              "items-center",
-              "w-1/5",
-              "mb-6"
-            );
-
-            const noSectionHeader = document.createElement("p");
-            noSectionHeader.textContent = "No Section";
-            noSectionHeader.classList.add("text-lg", "mb-2");
-            noSectionContainer.appendChild(noSectionHeader);
-            unmatchedTasks.forEach((dataItem) => {
-              const { title, due } = dataItem;
-              const taskCard = document.createElement("div");
-              taskCard.classList.add(
-                "bg-white",
-                "p-4",
-                "rounded-lg",
-                "shadow-sm",
-                "flex",
-                "flex-col",
-                "items-center",
-                "text-center",
-                "mb-2",
-                "w-full"
-              );
-              const cleanTitle = title.replace(/s-/, '');
-              let cardContent = `<p class="text-md">${cleanTitle.split('#')[0]}</p>`;
-
-              if (title.includes('#')) {
-                const section = title.split('#')[1];
-                cardContent += `<p class="text-sm text-gray-600 mt-1">#${section}</p>`;
-              }
-
-              if (due) {
-                const dueDate = new Date(due);
-                const formattedDate = `${String(dueDate.getDate()).padStart(2, "0")}.${String(dueDate.getMonth() + 1).padStart(2, "0")}.${dueDate.getFullYear()}`;
-                cardContent += `<p class="text-sm text-gray-600 mt-1">${formattedDate}</p>`;
-              }
-
-              taskCard.innerHTML = cardContent;
-              taskCard.addEventListener("click", () => {
-              openTaskModal(dataItem);
-              });
-
-              noSectionContainer.appendChild(taskCard);
-            });
-
-            rowContainer.appendChild(noSectionContainer);
           }
-        }
+        })
+        .catch((error) => {
+          console.error("Error fetching sublists:", error);
+        });
+    }
+
+    if(selectedValue=='Sections'){
+      filterdataByListId(baseID,Listsections)
+    }
+
+    if (selectedValue === "Due date") {
+      const storedData = localStorage.getItem("allListAndTask");
+      const dataContainer = document.getElementById("data-container");
+
+      if (dataContainer) {
+        dataContainer.innerHTML = "";
+        const parsedData = storedData ? JSON.parse(storedData) : [];
+        const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
+        const tasksWithDueDate = matchedList.tasks.filter((task) => task.due);
+        const tasksWithoutDueDate = matchedList.tasks.filter((task) => !task.due);
+        const createTaskCard = (task) => {
+          const taskCard = document.createElement("div");
+          taskCard.classList.add(
+            "bg-white",
+            "p-4",
+            "rounded-lg",
+            "shadow-sm",
+            "text-center",
+            "mb-2"
+          );
+          const sPrefixRegex = /s-([^#\s-]+)/;
+          const hashPrefixRegex = /#([^-\s]+)/;
+          const sMatch = task.title.match(sPrefixRegex);
+          const sValue = sMatch ? sMatch[1].trim() : null;
+          const hashMatch = task.title.match(hashPrefixRegex);
+          const hashValue = hashMatch ? hashMatch[1].trim() : null;
+          let taskName = task.title
+            .replace(sPrefixRegex, "")
+            .replace(hashPrefixRegex, "")
+            .trim();
+
+          const dueDate = task.due ? new Date(task.due) : null;
+          const formattedDate = dueDate
+            ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
+                dueDate.getMonth() + 1
+              ).padStart(2, "0")}.${dueDate.getFullYear()}`
+            : null;
+          taskCard.innerHTML = `
+            ${taskName ? `<p>${taskName}</p>` : ""}
+            ${sValue ? `<p>${sValue}</p>` : ""}
+            ${hashValue ? `#${hashValue}</p>` : ""}
+            ${formattedDate ? `${formattedDate}</p>` : ""}
+          `;
+          taskCard.addEventListener("click", () => {
+                    openTaskModal(task);
+                  });
+          return taskCard;
+        };
+
+        const groupedTasks = tasksWithDueDate.reduce((acc, task) => {
+          const date = new Date(task.due);
+          const shortDate = `${date.getDate()} ${date.toLocaleString("default", {
+            month: "short",
+          })}`;
+          if (!acc[shortDate]) acc[shortDate] = [];
+          acc[shortDate].push(task);
+          return acc;
+        }, {});
+        groupedTasks["No Due Date"] = tasksWithoutDueDate;
+        const dateRow = document.createElement("div");
+        dateRow.classList.add("flex", "gap-4", "mb-4");
+        const taskContainer = document.createElement("div");
+        taskContainer.classList.add("flex", "gap-4");
+        Object.entries(groupedTasks).forEach(([shortDate, tasks]) => {
+          const dateHeader = document.createElement("div");
+          dateHeader.classList.add("w-[22%]");
+          dateHeader.textContent = shortDate;
+          dateRow.appendChild(dateHeader);
+          const taskColumn = document.createElement("div");
+          taskColumn.classList.add("flex", "flex-col", "gap-2", "w-[22%]");
+
+          tasks.forEach((task) => {
+            const taskCard = createTaskCard(task);
+            taskColumn.appendChild(taskCard);
+          });
+
+          taskContainer.appendChild(taskColumn);
+        });
+        dataContainer.appendChild(dateRow);
+        dataContainer.appendChild(taskContainer);
       }
-    })
-    .catch((error) => {
-      console.error("Error fetching sublists:", error);
-    });
-}
-
-if(selectedValue=='Sections'){
-  filterdataByListId(baseID,Listsections)
-}
-
-if (selectedValue === "Due date") {
-  const storedData = localStorage.getItem("allListAndTask");
-  const dataContainer = document.getElementById("data-container");
-
-  if (dataContainer) {
-    dataContainer.innerHTML = "";
-    const parsedData = storedData ? JSON.parse(storedData) : [];
-    const matchedList = parsedData.data.find((item) => item.taskList.id === baseID);
-    const tasksWithDueDate = matchedList.tasks.filter((task) => task.due);
-    const tasksWithoutDueDate = matchedList.tasks.filter((task) => !task.due);
-    const createTaskCard = (task) => {
-      const taskCard = document.createElement("div");
-      taskCard.classList.add(
-        "bg-white",
-        "p-4",
-        "rounded-lg",
-        "shadow-sm",
-        "text-center",
-        "mb-2"
-      );
-      const sPrefixRegex = /s-([^#\s-]+)/;
-      const hashPrefixRegex = /#([^-\s]+)/;
-      const sMatch = task.title.match(sPrefixRegex);
-      const sValue = sMatch ? sMatch[1].trim() : null;
-      const hashMatch = task.title.match(hashPrefixRegex);
-      const hashValue = hashMatch ? hashMatch[1].trim() : null;
-      let taskName = task.title
-        .replace(sPrefixRegex, "")
-        .replace(hashPrefixRegex, "")
-        .trim();
-
-      const dueDate = task.due ? new Date(task.due) : null;
-      const formattedDate = dueDate
-        ? `${String(dueDate.getDate()).padStart(2, "0")}.${String(
-            dueDate.getMonth() + 1
-          ).padStart(2, "0")}.${dueDate.getFullYear()}`
-        : null;
-      taskCard.innerHTML = `
-        ${taskName ? `<p>${taskName}</p>` : ""}
-        ${sValue ? `<p>${sValue}</p>` : ""}
-        ${hashValue ? `#${hashValue}</p>` : ""}
-        ${formattedDate ? `${formattedDate}</p>` : ""}
-      `;
-      taskCard.addEventListener("click", () => {
-                openTaskModal(task);
-              });
-      return taskCard;
-    };
-
-    const groupedTasks = tasksWithDueDate.reduce((acc, task) => {
-      const date = new Date(task.due);
-      const shortDate = `${date.getDate()} ${date.toLocaleString("default", {
-        month: "short",
-      })}`;
-      if (!acc[shortDate]) acc[shortDate] = [];
-      acc[shortDate].push(task);
-      return acc;
-    }, {});
-    groupedTasks["No Due Date"] = tasksWithoutDueDate;
-    const dateRow = document.createElement("div");
-    dateRow.classList.add("flex", "gap-4", "mb-4");
-    const taskContainer = document.createElement("div");
-    taskContainer.classList.add("flex", "gap-4");
-    Object.entries(groupedTasks).forEach(([shortDate, tasks]) => {
-      const dateHeader = document.createElement("div");
-      dateHeader.classList.add("w-[22%]");
-      dateHeader.textContent = shortDate;
-      dateRow.appendChild(dateHeader);
-      const taskColumn = document.createElement("div");
-      taskColumn.classList.add("flex", "flex-col", "gap-2", "w-[22%]");
-
-      tasks.forEach((task) => {
-        const taskCard = createTaskCard(task);
-        taskColumn.appendChild(taskCard);
-      });
-
-      taskContainer.appendChild(taskColumn);
-    });
-    dataContainer.appendChild(dateRow);
-    dataContainer.appendChild(taskContainer);
-  }
-}
+    }
   
   closeDropdown()
 }
@@ -2018,9 +2018,15 @@ function saveUpdatedDataToLocalStorage(updatedData) {
 
 let taskLists;
 let taskID;
-function openTaskModal(task) {
+function openTaskModal(task,value) {
   taskID = task.id
+  if(value=='filter'){
+     baseID = task.listId;
+     taskID = task.taskId;
+
+  }
   const storedData = JSON.parse(localStorage.getItem("allListAndTask"))
+
   if (storedData && storedData.data) {
          taskLists = storedData.data.map((item) => item.taskList);
         const selectBox = document.getElementById("list");
@@ -2035,43 +2041,43 @@ function openTaskModal(task) {
         console.error("Unexpected API response structure:", data);
       }
 
-fetch(`/tasks/googleTaskById/${baseID}/${task.id}`)
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  })
-  .then((taskData) => {
-    getListId(taskData.data.taskListId,taskData.data.section, taskData.data.sublist)
- 
-    if (taskData) {
-      document.querySelector("#formContainer input[type='text']").value = taskData.data.titleName || ''; 
-      document.querySelector("#dueDate").value = taskData.data.dueDate ? taskData.data.dueDate.split('T')[0] : '';
-      document.querySelector("#description").value = taskData.data.notes || '';
-      const selectBox = document.getElementById("list");
-      selectBox.innerHTML = '<option>Choose List</option>';
-      taskLists.forEach((taskList) => {
-        const option = document.createElement("option");
-        option.value = taskList.id;
-        option.textContent = taskList.name || taskList.title;
-
-        if (taskList.id === taskData.data.taskListId) {
-          option.selected = true;
+    fetch(`/tasks/googleTaskById/${baseID}/${taskID}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        return response.json();
+      })
+      .then((taskData) => {
+        getListId(taskData.data.taskListId,taskData.data.section, taskData.data.sublist)
+    
+        if (taskData) {
+          document.querySelector("#formContainer input[type='text']").value = taskData.data.titleName || ''; 
+          document.querySelector("#dueDate").value = taskData.data.dueDate ? taskData.data.dueDate.split('T')[0] : '';
+          document.querySelector("#description").value = taskData.data.notes || '';
+          const selectBox = document.getElementById("list");
+          selectBox.innerHTML = '<option>Choose List</option>';
+          taskLists.forEach((taskList) => {
+            const option = document.createElement("option");
+            option.value = taskList.id;
+            option.textContent = taskList.name || taskList.title;
 
-        selectBox.appendChild(option);
+            if (taskList.id === taskData.data.taskListId) {
+              option.selected = true;
+            }
+
+            selectBox.appendChild(option);
+          });
+          configureSaveButton("update", taskID);
+        } else {
+          console.log("No task data found for the given ID");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
       });
-      configureSaveButton("update", taskID);
-    } else {
-      console.log("No task data found for the given ID");
-    }
-  })
-  .catch((error) => {
-    console.error("Error fetching data:", error);
-  });
 
-document.getElementById("formContainer").classList.remove("hidden");
+    document.getElementById("formContainer").classList.remove("hidden");
 
 }
  
@@ -2101,7 +2107,7 @@ function getTomorrowDate() {
 }
 
 
-function filterTasks(dateToFilter,value) {
+function filterTasks(dateToFilter, value) {
   const localData = localStorage.getItem("allListAndTask");
 
   if (!localData) {
@@ -2130,6 +2136,8 @@ function filterTasks(dateToFilter,value) {
             sublist: sublistMatch ? sublistMatch[1] : "",
             section: sectionMatch ? sectionMatch[1] : "",
             dueDate: dueDateFormatted,
+            taskId: task.id,
+            listId: taskList.id,
           });
         }
       }
@@ -2138,15 +2146,18 @@ function filterTasks(dateToFilter,value) {
     if (matchingTasks.length > 0) {
       filteredData.push({
         listName: taskList.title,
+        listId: taskList.id,
         tasks: matchingTasks,
       });
     }
   });
 
-  renderTasks(filteredData,value);
+  renderTasks(filteredData, value);
 }
 
+
 function renderTasks(filteredData,value) {
+  console.log(filteredData,"=====================")
       const mainContent = document.getElementById("main-content");
 
       mainContent.innerHTML = 
@@ -2188,14 +2199,17 @@ function renderTasks(filteredData,value) {
                 <p class="text-sm text-gray-500">${task.section || ""}</p>
                 <p class="text-sm text-gray-500">${task.dueDate}</p>
               `;
-
+              card.addEventListener("click", () => {
+                openTaskModal(task,"filter");
+                });
               columnContainer.appendChild(card);
             });
 
             gridContainer.appendChild(columnContainer);
           });
-
+         
           container.appendChild(gridContainer);
+         
         }
 }
 
