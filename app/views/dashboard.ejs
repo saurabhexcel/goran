@@ -1503,7 +1503,8 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
     .then((response) => response.json())
     .then((data) => {
       closeForm();
-      callAllListAndTask();
+      const getLocalValue = localStorage.getItem('todayTask')
+      callAllListAndTask(getLocalValue);
     })
 
     .catch((error) => {
@@ -1979,7 +1980,7 @@ function selectSubListItem(item){
 }
 
 
-function callAllListAndTask() {
+function callAllListAndTask(value) {
   const storageKey = 'allListAndTask';
 
   localStorage.removeItem(storageKey);
@@ -1992,6 +1993,13 @@ function callAllListAndTask() {
 
       saveUpdatedDataToLocalStorage(UpdatedTaskData).then(() => {
         const currentView = localStorage.getItem('currentView'); 
+
+        if (value === "Today Task") {
+        filterTasks(getTodayDate(), "Today Task");
+        } else if(value==="Tomorrow Task")  {
+          filterTasks(getTomorrowDate(), "Tomorrow Task");
+        }
+
         if(currentView=='list'){
           filterdataByListId(listId, Listsections);
 
@@ -2002,6 +2010,8 @@ function callAllListAndTask() {
           filterdataBySublist(baseListID,sections,sublistTitle)
 
         }
+        }else{
+          console.log("this is calling============")
         }
        
       });
@@ -2108,6 +2118,7 @@ function getTomorrowDate() {
 
 
 function filterTasks(dateToFilter, value) {
+  console.log("calling filter task=============")
   const localData = localStorage.getItem("allListAndTask");
 
   if (!localData) {
@@ -2216,12 +2227,16 @@ function renderTasks(filteredData,value) {
 
 document.getElementById("today-button").addEventListener("click", () => {
   const todayDate = getTodayDate();
-  filterTasks(todayDate,"Today Task");
+  const today = "Today Task"
+  filterTasks(todayDate,today);
+  localStorage.setItem("todayTask",today)
 });
 
 document.getElementById("tomorrow-button").addEventListener("click", () => {
   const yesterdayDate = getTomorrowDate();
-  filterTasks(yesterdayDate,"Tomorrow Task");
+  const tomorrow = "Tomorrow Task"
+  filterTasks(yesterdayDate,tomorrow);
+  localStorage.setItem("todayTask",tomorrow)
 });
 
 
