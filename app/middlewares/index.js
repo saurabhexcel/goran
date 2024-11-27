@@ -11,8 +11,9 @@ module.exports = {
 
         try {
             if (!token) { // token boş ise..
-                res.redirect("/login");
-                next()
+                res.redirect("/");
+                // next()
+                return;
             }// cookiesde ki token kodu ile oluşturduğumuz secretkeyle kontrol et.
 
             jwt.verify(token, 'secretsecret', (err, decoded) => {

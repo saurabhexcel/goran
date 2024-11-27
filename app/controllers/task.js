@@ -21,7 +21,11 @@ exports.getTasksList = async (req, res) => {
 
 exports.getTaskList = async (req, res) => {
     try {
+        if (!req.decoded) {
+            return res.redirect('/');
+        }
         const { email } = req.decoded;
+  
         let uData = await knex('googleUsers').where({ email }).first();
 
         if (!uData) {

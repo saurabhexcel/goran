@@ -88,6 +88,7 @@ exports.googleLogin = (req, res) =>{
 
     const authUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
+        prompt: 'consent',
         scope: ['https://www.googleapis.com/auth/tasks.readonly','https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/tasks'],
     });
 
