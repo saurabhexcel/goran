@@ -10,5 +10,6 @@ router.post('/login', authController.login)
 router.post('/register', authController.register)
 router.get('/auth_google', authController.googleLogin)
 router.get('/callback', authController.callbackFunction)
+router.post('/access_token', authController.getAccessToken)
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
+const axios = require('axios')
 require('dotenv').config()
 
 const knex = require("./../../knex/knex");
@@ -47,7 +48,6 @@ exports.getlogin = async (req, res) => {
 }
 
 exports.register = (req, res) => {
-    console.log(req.body);
 
     const { email, username, password, repassword } = req.body;
 
@@ -129,7 +129,7 @@ exports.callbackFunction = async (req, res) => {
                 });
         }
 
-        const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
+        const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '1h' });
         res.cookie('jwt', jwtToken);
         res.redirect('/tasks/list');
 
@@ -138,6 +138,50 @@ exports.callbackFunction = async (req, res) => {
         res.status(500).send("Authentication failed. Please try again.");
     }
 };
+
+
+exports.getAccessToken = async (req, res)=>{
+    const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'please provide an email' });
+  }
+
+  let userData = await knex('googleUsers').where({ email }).first();
+  console.log(userData,"============useedata")
+
+  if(!userData){
+    res.status(400).json({ success: false, message: 'data not found' });
+  }
+  const { refresh_token } = userData
+
+  try {
+    // Request a new access token from Google
+    const response = await axios.post('https://oauth2.googleapis.com/token', {
+      client_id: process.env.CLIENT_ID, // Replace with your Google client ID
+      client_secret: process.env.CLIENT_SECRET, // Replace with your Google client secret
+      refresh_token: refresh_token,
+      grant_type: 'refresh_token',
+    });
+
+    const { access_token, expires_in } = response.data;
+    userData.accessToken = access_token;
+
+    const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '24h' });
+    res.cookie('jwt', jwtToken);
+    res.cookie('email', email)
+    res.status(200).json({ success: true, message: 'access Token genrated successfully' })
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to refresh access token',
+      error: error.response?.data || error.message,
+    });
+  }
+
+
+}
 
 
 exports.login = async (req, res) => {
@@ -159,6 +203,7 @@ exports.login = async (req, res) => {
                 expiresIn: '24h'
             });
             res.cookie('jwt', token);
+            res.cookie('email',email)
             res.status(200).redirect("/dashboard");
         }
         else {
@@ -171,5 +216,7 @@ exports.login = async (req, res) => {
     }
 
 }
+
+
 
 module.export= {oauth2Client}
