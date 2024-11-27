@@ -37,10 +37,83 @@
             </form>
 
             <h1 class="text-1xl font-bold mb-4">Or use an external provider</h1>
-            <button class="w-full bg-blue-400 text-white py-2 rounded-md mb-4"><a href="/auth_google">Login with Google</a></button>
+            <button id="googleLoginButton" class="w-full bg-blue-400 text-white py-2 rounded-md mb-4">
+                Login with Google
+            </button>
+              
+            <!-- <button class="w-full bg-blue-400 text-white py-2 rounded-md mb-4"><a id="loginButton">Login with Google</a></button> -->
             <!-- <a href="/register">Register</a> -->
         </div>
     </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const getJWT = () =>
+    document.cookie.split("; ").find((row) => row.startsWith("jwt="))?.split("=")[1] || null;
+    console.log(getJWT,"getjwt toekn============")
+    const getTokenExpiry = (token) => {
+    console.log(token,"expired not=============")
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      console.log(payload,"payload==============")
+      return payload.exp;
+    } catch {
+      console.error("Invalid JWT token");
+      return null;
+    }
+  };
+
+  const refreshToken = async (email) => {
+  console.log(email, "email==============");
+  try {
+    const response = await fetch("/access_token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    if (response.ok) {
+      console.log("Token  successfully refresed.");
+      return true;
+    } else {
+      console.error("Failed to refresh token");
+      return false;
+    }
+  } catch (error) {
+    console.error("Error refreshing token:", error);
+    return false;
+  }
+};
+
+  const mainLoginCheck = async () => {
+    const token = getJWT();
+    if (!token) {
+      return (window.location.href = "/auth_google");
+    }
+
+    const expiry = getTokenExpiry(token);
+    const currentTime = Math.floor(Date.now() / 1000);
+    if (expiry && expiry - currentTime < 10) {
+      console.log("Token is about to expire, refreshing...");
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const isRefreshed = await refreshToken(payload.email);
+      if (!isRefreshed) return alert("Unable to refresh token. Please log in again.");
+    }
+    window.location.href = "/auth_google";
+  };
+
+  const loginButton = document.querySelector("#googleLoginButton");
+  if (loginButton) {
+    loginButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      mainLoginCheck();
+    });
+  }
+});
+
+    </script>
 </body>
 
 </html>
