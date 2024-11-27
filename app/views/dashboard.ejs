@@ -160,11 +160,10 @@
 
       <!-- Main Content -->
       <div class="flex-1 p-8" id="main-content">
-
-        <h1 class="text-3xl font-bold mb-4">Today</h1>
+       <!-- <div id="value-container"></div> -->
+        <!-- <h1 class="text-3xl font-bold mb-4">Today</h1>
         <p class="text-gray-600 mb-6">3 tasks</p>
 
-        <!-- Task Sections -->
         <div class="bg-white rounded-lg shadow p-6 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold">Overdue</h2>
@@ -204,7 +203,6 @@
           </ul>
         </div>
 
-        <!-- Today's Tasks -->
         <div class="bg-white rounded-lg shadow p-6">
           <h2 class="text-lg font-semibold mb-4">30 Aug · Today · Friday</h2>
           <ul>
@@ -224,7 +222,7 @@
               </label>
             </li>
           </ul>
-        </div>
+        </div> -->
       </div>
     </div>
 
@@ -2238,6 +2236,15 @@ document.getElementById("tomorrow-button").addEventListener("click", () => {
   filterTasks(yesterdayDate,tomorrow);
   localStorage.setItem("todayTask",tomorrow)
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const todayDate = getTodayDate();
+  const todayLabel = "Today Task";
+  filterTasks(todayDate, todayLabel);
+  localStorage.setItem("todayTask", todayLabel);
+  callAllListAndTask()
+});
+
 
 
 (function () {
