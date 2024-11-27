@@ -9,6 +9,7 @@ router.get('/login', authController.getlogin)
 router.post('/login', authController.login)
 router.post('/register', authController.register)
 router.get('/auth_google', authController.googleLogin)
+router.get('/login_google',authController.loginViaGoogle)
 router.get('/callback', authController.callbackFunction)
 router.post('/access_token', authController.getAccessToken)
 

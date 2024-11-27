@@ -90,7 +90,7 @@
   const mainLoginCheck = async () => {
     const token = getJWT();
     if (!token) {
-      return (window.location.href = "/auth_google");
+      return (window.location.href = "/login_google");
     }
 
     const expiry = getTokenExpiry(token);
@@ -99,7 +99,7 @@
       console.log("Token is about to expire, refreshing...");
       const payload = JSON.parse(atob(token.split(".")[1]));
       const isRefreshed = await refreshToken(payload.email);
-      if (!isRefreshed) return alert("Unable to refresh token. Please log in again.");
+    //   if (!isRefreshed) return alert("Unable to refresh token. Please log in again.");
     }
     window.location.href = "/auth_google";
   };
