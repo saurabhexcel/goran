@@ -30,13 +30,13 @@
       <!-- Sidebar -->
       <div class="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center">
+          <div class="flex items-center" onclick="goBack()" >
             <div
               class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold"
             >
               A
             </div>
-            <span onclick="goBack()" class="ml-2 font-semibold cursor-pointer"
+            <span class="ml-2 font-semibold cursor-pointer"
               >Admin</span
             >
           </div>
@@ -527,6 +527,36 @@
             Due date
           </p>
         </div>
+
+        <!-- Logout Model -->
+        <div
+        id="logoutmodal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full"
+      >
+        <div
+          class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white flex flex-col justify-between h-[150px]"
+        >
+          <div>
+            <h3 class="text-md  leading-6 text-gray-900 mb-2"></h3>
+          </div>
+            <div class="mt-4">
+              <button
+                type="submit"
+                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                onclick="logoutUser()"
+              >
+                Logout
+              </button>
+              <button
+                type="button"
+                onclick="closeLogoutModal()"
+                class="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400 ml-2"
+              >
+                Cancel
+              </button>
+            </div>
+        </div>
+        </div>
      
     <script>
 
@@ -659,17 +689,49 @@
           .catch((error) => console.error("Error fetching sections:", error));
       }
 
-      function addNewItem(listId) {
-        // Open a form modal or navigate to an "Add New Item" page
-        alert(`Adding a new item for list ID: ${listId}`);
-        // For example, you could navigate to: window.location.href = `/add-item?listId=${listId}`;
-      }
-      const originalContent = document.getElementById("main-content").innerHTML;
+      const getJWT = () => document.cookie.split('; ').find(row => row.startsWith('jwt='))?.split('=')[1] || null;
+
+      const getEmailFromJWT = (token) => {
+        if (!token) return null;
+        try {
+          const tokenpayload = token.split('.')[1];
+          const payloadDecoded = atob(tokenpayload);
+          const payload = JSON.parse(payloadDecoded);
+          return payload.email;
+        } catch (error) {
+          console.error('Error decoding token:', error);
+          return null;
+        }
+      };
 
       function goBack() {
-        const mainContent = document.getElementById("main-content");
-        mainContent.innerHTML = originalContent;
+      const token = getJWT();
+      const email = getEmailFromJWT(token);
+
+      if (email) {
+        document.querySelector('#logoutmodal h3').textContent = `Are you sure you want to logout? ${email}`;
+      } 
+      // else {
+      //   console.error('Email not found in the token');
+      //   document.querySelector('#logoutmodal h3').textContent = "Are you sure you want to logout?";
+      // }
+
+      document.getElementById('logoutmodal').classList.remove('hidden');
+    }
+
+
+      function closeLogoutModal() {
+        document.getElementById('logoutmodal').classList.add('hidden');
       }
+
+      function logoutUser() {
+        console.log("clear all========")
+        document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+        localStorage.clear();
+        window.location.href = "/";
+      }
+
+
       function openModal(id) {
         document.getElementById("modal").classList.remove("hidden");
         document.getElementById("listId").value = id;
@@ -1311,12 +1373,12 @@
 
 function getListId(selectElement, taskSection, taskSublist) {
   const selectedValue = selectElement.value || selectElement ;
+  console.log(selectedValue,taskSection,taskSublist,"value------------")
   fetch(`/tasks/subList/all?google_list_id=${selectedValue}`)
     .then((response) => response.json())
     .then((data) => {
       allListAndSection = data;
       
-      //Sublist updation 
       const sublistSelect = document.getElementById('sublist');
       sublistSelect.innerHTML = '<option>Choose Sublist</option>';
       let sublistid;
@@ -1324,7 +1386,7 @@ function getListId(selectElement, taskSection, taskSublist) {
         const option = document.createElement('option');
         option.value = sublist.sublist_id;
         option.textContent = sublist.sublist_name;
-
+        console.log(sublist.sublist_name,taskSublist,"taskSublisttaskSublist")
         if (taskSublist && sublist.sublist_name === taskSublist) {
           option.selected = true;
         }
@@ -1501,7 +1563,7 @@ document.getElementById("saveButton").addEventListener("click", function (e) {
     .then((response) => response.json())
     .then((data) => {
       closeForm();
-      const getLocalValue = localStorage.getItem('todayTask')
+      const getLocalValue = localStorage.getItem('currentView')
       callAllListAndTask(getLocalValue);
     })
 
@@ -2029,22 +2091,22 @@ let taskID;
 function openTaskModal(task,value) {
   taskID = task.id
   if(value=='filter'){
-     baseID = task.listId;
-     taskID = task.taskId;
+    baseID = task.listId;
+    taskID = task.taskId;
 
   }
   const storedData = JSON.parse(localStorage.getItem("allListAndTask"))
 
   if (storedData && storedData.data) {
          taskLists = storedData.data.map((item) => item.taskList);
-        const selectBox = document.getElementById("list");
-        selectBox.innerHTML = '<option>Choose List</option>';
-        taskLists.forEach((taskList) => {
-          const option = document.createElement("option");
-          option.value = taskList.id;
-          option.textContent = taskList.name || taskList.title;
-          selectBox.appendChild(option);
-        });
+    const selectBox = document.getElementById("list");
+    selectBox.innerHTML = '<option>Choose List</option>';
+    taskLists.forEach((taskList) => {
+      const option = document.createElement("option");
+      option.value = taskList.id;
+      option.textContent = taskList.name || taskList.title;
+      selectBox.appendChild(option);
+    });
       } else {
         console.error("Unexpected API response structure:", data);
       }
@@ -2064,31 +2126,31 @@ function openTaskModal(task,value) {
           document.querySelector("#dueDate").value = taskData.data.dueDate ? taskData.data.dueDate.split('T')[0] : '';
           document.querySelector("#description").value = taskData.data.notes || '';
           const selectBox = document.getElementById("list");
-          selectBox.innerHTML = '<option>Choose List</option>';
-          taskLists.forEach((taskList) => {
-            const option = document.createElement("option");
-            option.value = taskList.id;
-            option.textContent = taskList.name || taskList.title;
+      selectBox.innerHTML = '<option>Choose List</option>';
+      taskLists.forEach((taskList) => {
+        const option = document.createElement("option");
+        option.value = taskList.id;
+        option.textContent = taskList.name || taskList.title;
 
             if (taskList.id === taskData.data.taskListId) {
-              option.selected = true;
-            }
-
-            selectBox.appendChild(option);
-          });
-          configureSaveButton("update", taskID);
-        } else {
-          console.log("No task data found for the given ID");
+          option.selected = true;
         }
+
+        selectBox.appendChild(option);
+      });
+      configureSaveButton("update", taskID);
+    } else {
+          console.log("No task data found for the given ID");
+    }
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
 
-    document.getElementById("formContainer").classList.remove("hidden");
+  document.getElementById("formContainer").classList.remove("hidden");
 
 }
- 
+
 function formatISODateToDDMMYYYY(isoDate) {
   const date = new Date(isoDate);
   const day = String(date.getDate()).padStart(2, "0");
@@ -2227,21 +2289,21 @@ document.getElementById("today-button").addEventListener("click", () => {
   const todayDate = getTodayDate();
   const today = "Today Task"
   filterTasks(todayDate,today);
-  localStorage.setItem("todayTask",today)
+  localStorage.setItem("currentView",today)
 });
 
 document.getElementById("tomorrow-button").addEventListener("click", () => {
   const yesterdayDate = getTomorrowDate();
   const tomorrow = "Tomorrow Task"
   filterTasks(yesterdayDate,tomorrow);
-  localStorage.setItem("todayTask",tomorrow)
+  localStorage.setItem("currentView",tomorrow)
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   const todayDate = getTodayDate();
   const todayLabel = "Today Task";
   filterTasks(todayDate, todayLabel);
-  localStorage.setItem("todayTask", todayLabel);
+  localStorage.setItem("currentView", todayLabel);
   callAllListAndTask()
 });
 
