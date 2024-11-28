@@ -48,8 +48,7 @@
 
     <script>
     document.addEventListener("DOMContentLoaded", () => {
-    const getJWT = () =>
-    document.cookie.split("; ").find((row) => row.startsWith("jwt="))?.split("=")[1] || null;
+    const getJWT = () => localStorage.getItem('jwt') || null;
     console.log(getJWT,"getjwt toekn============")
     const getTokenExpiry = (token) => {
     console.log(token,"expired not=============")
@@ -75,7 +74,14 @@
     });
 
     if (response.ok) {
-      console.log("Token  successfully refresed.");
+      const data = await response.json();
+        if (data.success && data.token) {
+          // Store the refreshed token in localStorage
+          localStorage.setItem('jwt', data.token);
+          console.log('Token refreshed successfully.');
+        } else {
+          console.error('Failed to refresh token:', data.message);
+        }
       return true;
     } else {
       console.error("Failed to refresh token");

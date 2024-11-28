@@ -142,7 +142,7 @@ exports.callbackFunction = async (req, res) => {
 
         const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '1h' });
         res.cookie('jwt', jwtToken);
-        res.redirect('/tasks/list');
+        res.redirect(`/tasks/list?token=${jwtToken}`);
 
     } catch (error) {
         console.error("Error during Google OAuth callback:", error);

@@ -560,6 +560,13 @@
      
     <script>
 
+      const url = new URLSearchParams(window.location.search)
+      const token = url.get("token")
+      console.log(token,"============")
+      if(token){
+        localStorage.setItem("jwt",token)
+      }
+
       function toggleSublist(listId) {
           const sublist = document.getElementById(`sublist-${listId}`);
           const icon = document.getElementById(`icon-${listId}`);
@@ -726,7 +733,6 @@
 
       function logoutUser() {
         console.log("clear all========")
-        document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
         localStorage.clear();
         window.location.href = "/";
       }
@@ -2309,59 +2315,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-(function () {
-  let isTokenRefreshing = false;
-  let email;
-  const getJWT = () => document.cookie.split('; ').find(row => row.startsWith('jwt='))?.split('=')[1] || null;
-  const getTokenExpiry = (token) => {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      email = payload.email
-      return payload.exp; 
-    } catch {
-      console.error('Invalid JWT token');
-      return null;
-    }
-  };
-
-
-  const refreshToken = async () => {
-    if (isTokenRefreshing) return;
-    isTokenRefreshing = true;
-    
-    try {
-      const response = await fetch('/access_token', {
-        method: 'POST',
-        headers: {
-        "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        console.log('Token refreshed successfully.');
-      } else {
-        console.error('Failed to refresh token');
+  (function () {
+    let isTokenRefreshing = false;
+    let email;
+    const getJWT = () => localStorage.getItem('jwt') || null;
+    const getTokenExpiry = (token) => {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        email = payload.email
+        return payload.exp; 
+      } catch {
+        console.error('Invalid JWT token');
+        return null;
       }
-    } catch (error) {
-      console.error('Error refreshing token:', error);
-    } finally {
-      isTokenRefreshing = false;
-    }
-  };
+    };
 
-  setInterval(() => {
-    const token = getJWT();
-    if (!token) return console.error('JWT not found');
 
-    const expiry = getTokenExpiry(token);
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (expiry && expiry - currentTime < 10) {
-      console.log('Token is about to expire, refreshing...');
-      refreshToken();
-    }
-  }, 1000);
-})();
+    const refreshToken = async () => {
+      if (isTokenRefreshing) return;
+      isTokenRefreshing = true;
+      
+      try {
+        const response = await fetch('/access_token', {
+          method: 'POST',
+          headers: {
+          "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.token) {
+          localStorage.setItem('jwt', data.token);
+          console.log('Token refreshed successfully.');
+        } else {
+          console.error('Failed to refresh token:', data.message);
+        }
+
+        } else {
+          console.error('Failed to refresh token');
+        }
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+      } finally {
+        isTokenRefreshing = false;
+      }
+    };
+
+    setInterval(() => {
+      const token = getJWT();
+      if (!token) return console.error('JWT not found');
+      console.log(token,"=================")
+      const expiry = getTokenExpiry(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (expiry && expiry - currentTime < 10) {
+        console.log('Token is about to expire, refreshing...');
+        refreshToken();
+      }
+    }, 1000);
+  })();
+
 
 
 </script>
