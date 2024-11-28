@@ -562,7 +562,6 @@
 
       const url = new URLSearchParams(window.location.search)
       const token = url.get("token")
-      console.log(token,"============")
       if(token){
         localStorage.setItem("jwt",token)
       }
@@ -596,7 +595,6 @@
         const mainContent = document.getElementById("main-content");
         const [sublistId, baselistId] = ids.split(",");
         baseListID = baselistId;
-        console.log(baseListID,"baseListIDs")
       
         fetch(
           `/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`
@@ -732,7 +730,6 @@
       }
 
       function logoutUser() {
-        console.log("clear all========")
         localStorage.clear();
         window.location.href = "/";
       }
@@ -784,14 +781,11 @@
 
         function filterdataByListId(id, listSections) {
           const getLocaldata = JSON.parse(localStorage.getItem("allListAndTask"));
-          console.log(getLocaldata,id,"=====getLocaldata===========")
           if (getLocaldata && getLocaldata.data) {
             const matchedList = getLocaldata.data.find((item) => item.taskList.id === id);
             if (matchedList) {
               const localdata = localStorage.getItem(`apiData_${listTitle}`)
-              console.log(localdata,"localdata============")
               if (localdata === "Sections") {
-               console.log("called by id=====")
                displayData(matchedList.tasks, listSections);
                } else if (localdata) {
                 selectItem(localdata);
@@ -808,7 +802,6 @@
 
         function filterdataBySublist(id, sublistSections,sublistTitle) {
           const getLocaldata = JSON.parse(localStorage.getItem("allListAndTask"));
-          console.log(getLocaldata, "========local data");
           if (getLocaldata && getLocaldata.data) {
             const matchedList = getLocaldata.data.find((item) => item.taskList.id === id);
             if (matchedList) {
@@ -1379,7 +1372,6 @@
 
 function getListId(selectElement, taskSection, taskSublist) {
   const selectedValue = selectElement.value || selectElement ;
-  console.log(selectedValue,taskSection,taskSublist,"value------------")
   fetch(`/tasks/subList/all?google_list_id=${selectedValue}`)
     .then((response) => response.json())
     .then((data) => {
@@ -1392,7 +1384,6 @@ function getListId(selectElement, taskSection, taskSublist) {
         const option = document.createElement('option');
         option.value = sublist.sublist_id;
         option.textContent = sublist.sublist_name;
-        console.log(sublist.sublist_name,taskSublist,"taskSublisttaskSublist")
         if (taskSublist && sublist.sublist_name === taskSublist) {
           option.selected = true;
         }
@@ -2076,8 +2067,6 @@ function callAllListAndTask(value) {
           filterdataBySublist(baseListID,sections,sublistTitle)
 
         }
-        }else{
-          console.log("this is calling============")
         }
        
       });
@@ -2094,69 +2083,97 @@ function saveUpdatedDataToLocalStorage(updatedData) {
 
 let taskLists;
 let taskID;
-function openTaskModal(task,value) {
-  taskID = task.id
-  if(value=='filter'){
+function openTaskModal(task, value) {
+  let taskID = task.id;
+  let baseID;
+
+  if (value === 'filter') {
     baseID = task.listId;
     taskID = task.taskId;
-
   }
-  const storedData = JSON.parse(localStorage.getItem("allListAndTask"))
+
+  const storedData = JSON.parse(localStorage.getItem("allListAndTask"));
 
   if (storedData && storedData.data) {
-         taskLists = storedData.data.map((item) => item.taskList);
+    const taskLists = storedData.data.map((item) => item.taskList);
     const selectBox = document.getElementById("list");
     selectBox.innerHTML = '<option>Choose List</option>';
+
     taskLists.forEach((taskList) => {
       const option = document.createElement("option");
       option.value = taskList.id;
       option.textContent = taskList.name || taskList.title;
       selectBox.appendChild(option);
     });
-      } else {
-        console.error("Unexpected API response structure:", data);
-      }
+    const allTasks = storedData.data.flatMap((item) => {
+      return (item.tasks || []).map((task) => ({
+        ...task,
+        taskListId: item.taskList.id,
+      }));
+    });
 
-    fetch(`/tasks/googleTaskById/${baseID}/${taskID}`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((taskData) => {
-        getListId(taskData.data.taskListId,taskData.data.section, taskData.data.sublist)
-    
-        if (taskData) {
-          document.querySelector("#formContainer input[type='text']").value = taskData.data.titleName || ''; 
-          document.querySelector("#dueDate").value = taskData.data.dueDate ? taskData.data.dueDate.split('T')[0] : '';
-          document.querySelector("#description").value = taskData.data.notes || '';
-          const selectBox = document.getElementById("list");
+    const matchedTask = allTasks.find((t) => t.id === taskID);
+
+    if (matchedTask) {
+      const taskListId = matchedTask.taskListId;
+        let sublist = "";
+        let section = "";
+        let taskName = "";
+
+        if (matchedTask.title.includes("s-") || matchedTask.title.includes("#")) {
+          const sIndex = matchedTask.title.indexOf("s-");
+          const hashIndex = matchedTask.title.indexOf("#");
+
+          if (sIndex !== -1 && hashIndex !== -1) {
+            taskName = matchedTask.title.substring(0, sIndex).trim();
+            sublist = matchedTask.title.substring(sIndex + 2, hashIndex).trim();
+            section = matchedTask.title.substring(hashIndex + 1).trim();
+          }
+          else if (sIndex !== -1) {
+            taskName = matchedTask.title.substring(0, sIndex).trim();
+            sublist = matchedTask.title.substring(sIndex + 2).trim();
+            section = "";
+          }
+
+          else if (hashIndex !== -1) {
+            taskName = matchedTask.title.substring(0, hashIndex).trim();
+            sublist = "";
+            section = matchedTask.title.substring(hashIndex + 1).trim();
+          }
+          } else {
+            taskName = matchedTask.title.trim();
+            sublist = ""; 
+            section = "";
+          }
+
+      getListId(taskListId,section, sublist,);
+
+      document.querySelector("#formContainer input[type='text']").value = taskName;
+      document.querySelector("#dueDate").value = matchedTask.due ? matchedTask.due.split("T")[0] : "";
+      document.querySelector("#description").value = matchedTask.notes || "";
       selectBox.innerHTML = '<option>Choose List</option>';
       taskLists.forEach((taskList) => {
         const option = document.createElement("option");
         option.value = taskList.id;
         option.textContent = taskList.name || taskList.title;
 
-            if (taskList.id === taskData.data.taskListId) {
+        if (taskList.id === taskListId) {
           option.selected = true;
         }
 
         selectBox.appendChild(option);
       });
+
       configureSaveButton("update", taskID);
     } else {
-          console.log("No task data found for the given ID");
+      console.log("No matching task found for the given ID");
     }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+  } else {
+    console.error("Unexpected local data structure:", storedData);
+  }
 
   document.getElementById("formContainer").classList.remove("hidden");
-
 }
-
 function formatISODateToDDMMYYYY(isoDate) {
   const date = new Date(isoDate);
   const day = String(date.getDate()).padStart(2, "0");
@@ -2184,7 +2201,6 @@ function getTomorrowDate() {
 
 
 function filterTasks(dateToFilter, value) {
-  console.log("calling filter task=============")
   const localData = localStorage.getItem("allListAndTask");
 
   if (!localData) {
@@ -2234,7 +2250,6 @@ function filterTasks(dateToFilter, value) {
 
 
 function renderTasks(filteredData,value) {
-  console.log(filteredData,"=====================")
       const mainContent = document.getElementById("main-content");
 
       mainContent.innerHTML = 
@@ -2308,8 +2323,8 @@ document.getElementById("tomorrow-button").addEventListener("click", () => {
 document.addEventListener("DOMContentLoaded", () => {
   const todayDate = getTodayDate();
   const todayLabel = "Today Task";
-  filterTasks(todayDate, todayLabel);
   localStorage.setItem("currentView", todayLabel);
+  filterTasks(todayDate, todayLabel);
   callAllListAndTask()
 });
 
@@ -2366,11 +2381,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(() => {
       const token = getJWT();
       if (!token) return console.error('JWT not found');
-      console.log(token,"=================")
       const expiry = getTokenExpiry(token);
       const currentTime = Math.floor(Date.now() / 1000);
       if (expiry && expiry - currentTime < 10) {
-        console.log('Token is about to expire, refreshing...');
         refreshToken();
       }
     }, 1000);

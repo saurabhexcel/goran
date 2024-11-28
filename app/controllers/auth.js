@@ -180,8 +180,7 @@ exports.getAccessToken = async (req, res)=>{
 
     const jwtToken = jwt.sign({ email }, 'secretsecret', { expiresIn: '1h' });
     res.cookie('jwt', jwtToken);
-    res.cookie('email', email)
-    res.status(200).json({ success: true, message: 'access Token genrated successfully' })
+    res.status(200).json({ success: true, message: 'access Token genrated successfully',token:jwtToken })
   } catch (error) {
     console.error(error.response?.data || error.message);
     res.status(500).json({

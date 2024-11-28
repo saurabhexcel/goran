@@ -49,12 +49,9 @@
     <script>
     document.addEventListener("DOMContentLoaded", () => {
     const getJWT = () => localStorage.getItem('jwt') || null;
-    console.log(getJWT,"getjwt toekn============")
     const getTokenExpiry = (token) => {
-    console.log(token,"expired not=============")
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
-      console.log(payload,"payload==============")
       return payload.exp;
     } catch {
       console.error("Invalid JWT token");
@@ -63,7 +60,6 @@
   };
 
   const refreshToken = async (email) => {
-  console.log(email, "email==============");
   try {
     const response = await fetch("/access_token", {
       method: "POST",
