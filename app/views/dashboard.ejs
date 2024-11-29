@@ -580,7 +580,9 @@
               <polyline points="9 18 15 12 9 6"></polyline>
             `;
           }
-        }
+      }
+
+     
         
       let Listsections;
       let listTitle;
@@ -588,23 +590,49 @@
       let sections;
       let sublistTitle;
       let baselistId;
-      function openSection(ids, sublistTitle, listTitle) {
 
+      function getAllSublistAndSection(baselistid,sublistid=null){
+        let sublistTitle = localStorage.getItem("currentsubtitle");
+        let listtitle = localStorage.getItem("currentlisttitle");
+        fetch(`/tasks/listSection`)
+          .then((response) => response.json())
+          .then((data) => {
+            const alldata = localStorage.setItem("allSublistAndSection", JSON.stringify(data));
+            console.log(alldata,"alldata==========")
+            saveUpdatedSublistToLocalStorage(data).then(() => {
+            const current = localStorage.getItem("currentView")
+            if(current=='list'){
+              addListSection(`${baselistid}`, listtitle)
+            }else{
+              openSection(
+                  `${sublistid},${baselistid}`,
+                  sublistTitle,
+                  listtitle
+                );
+            }
+            })
+            
+          })
+      }
+
+      function saveUpdatedSublistToLocalStorage(updatedData) {
+      return new Promise((resolve) => {
+        localStorage.setItem("allSublistAndSection", JSON.stringify(updatedData));
+        resolve();
+      });
+      }
+
+      function openSection(ids, sublistTitle, listTitle) {
         localStorage.setItem("currentsubtitle", sublistTitle);
         localStorage.setItem("currentlisttitle", listTitle);
         const mainContent = document.getElementById("main-content");
         const [sublistId, baselistId] = ids.split(",");
         baseListID = baselistId;
-      
-        fetch(
-          `/tasks/subList/section?google_list_id=${baselistId}&sublist_id=${sublistId}`
-        )
-          .then((response) => response.json())
-          .then((data) => {
+        const localSubData = JSON.parse(localStorage.getItem("allSublistAndSection"));
             const storedData = localStorage.getItem("allListAndTask");
             let sectionsHTML = "";
             if (!storedData) {
-              sectionsHTML = data.sections
+              sectionsHTML = data?.sections
                 .map(
                   (section) => `
           <div class="section-item mt-4 text-black  p-2 text-center">
@@ -614,9 +642,24 @@
                 )
                 .join("");
             }
+            if (localSubData && localSubData.data.google_lists) {
+        const googleListsArray = Object.values(localSubData.data.google_lists);
+        const matchingList = googleListsArray.find(
+          (list) => list.google_list_id === baselistId
+        );
+        if (matchingList && matchingList.sublists) {
+          const matchingSublist = Object.values(matchingList.sublists).find(
+          (sublist) => sublist.sublist_id === sublistId
+           );
+           if (matchingSublist && matchingSublist.sections) {
+            sections = Object.values(matchingSublist.sections).map(
+              (section) => section.section_name
+            );
+          }
+        }
+      }
 
 
-            sections = data.sections.map((section) => section.section_name);
             sublistTitle = localStorage.getItem("currentsubtitle");
             let listtitle = localStorage.getItem("currentlisttitle");
             mainContent.innerHTML = `
@@ -634,26 +677,35 @@
                   <div id="sublist-container"  class="h-[91%] overflow-auto"></div>
 
       `;
-      const currentView = 'sublist'; // Determine if it's list or sublist view
+      const currentView = 'sublist';
       localStorage.setItem('currentView', currentView);
           filterdataBySublist(baselistId,sections,sublistTitle)
-            // if (storedData) {
-            //   // displayLocalData(JSON.parse(storedData), sections, sublistTitle);
-            // }
-          })
-          .catch((error) => console.error("Error fetching sections:", error));
       }
+
+
       function addListSection(id, title) {
-        localStorage.setItem("currentTitle", title);
-        const mainContent = document.getElementById("main-content");
+      localStorage.setItem("currentTitle", title);
+      const mainContent = document.getElementById("main-content");
+      baseID = id
+      const localData = JSON.parse(localStorage.getItem("allSublistAndSection"));
+      const storedData = localStorage.getItem("allListAndTask");
 
-        fetch(`/tasks/listSection?google_list_id=${id}`)
-          .then((response) => response.json())
-          .then((data) => {
-            let sectionsHTML = "";
-            title = title;
+      let sectionsHTML = "";
+      let listTitle = title;
 
-            const storedData = localStorage.getItem("allListAndTask");
+      if (localData && localData.data.google_lists) {
+        const googleListsArray = Object.values(localData.data.google_lists);
+        const matchingList = googleListsArray.find(
+          (list) => list.google_list_id === id
+        );
+
+        if (matchingList && matchingList.sections) {
+          Listsections = Object.values(matchingList.sections).map(
+            (section) => section.section_name
+          );
+        }
+      }
+
             if (!storedData) {
               sectionsHTML = data?.sections
                 ?.map(
@@ -662,37 +714,24 @@
                 )
                 .join("");
             }
-            Listsections = data?.sections?.map(
-              (section) => section?.section_name
-            );
-            baseID = id
-            listTitle = localStorage.getItem("currentTitle");
 
-            mainContent.innerHTML = `
-          <h2 class="font-semibold">${listTitle}</h2>
-          <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
-          <div class="flex flex-wrap gap-10">
-                   ${sectionsHTML}
-                </div>
-          <div class="cursor-pointer text-xl font-bold" >
+      listTitle = localStorage.getItem("currentTitle") || title;
+      mainContent.innerHTML = `
+        <h2 class="font-semibold">${listTitle}</h2>
+        <button onclick="openListSectionModal('${id}')" class="px-4 text-[12px] font-semibold text-black border border-black rounded">Add Section</button>
+        <div class="flex flex-wrap gap-10">
+          ${sectionsHTML}
+        </div>
+        <div class="cursor-pointer text-xl font-bold">
           <span onclick="toggleDropdown()"> ...</span>
-          </div>
-
-                  <div id="data-container" class="h-[91%] overflow-auto"></div>
-
+        </div>
+        <div id="data-container" class="h-[91%] overflow-auto"></div>
       `;
 
-      const currentView = 'list'; // Determine if it's list or sublist view
+      const currentView = 'list';
       localStorage.setItem('currentView', currentView);
-          filterdataByListId(id,Listsections)
-   
-
-            // if (storedData) {
-            //   // displayData(JSON.parse(storedData), Listsections);
-            // }
-          })
-          .catch((error) => console.error("Error fetching sections:", error));
-      }
+      filterdataByListId(id, Listsections);
+    }
 
       const getJWT = () => localStorage.getItem('jwt') || null;
 
@@ -1270,17 +1309,19 @@
             .then((response) => response.json())
             .then((data) => {
               if (data.message === "Section added successfully") {
-                let sublistTitle = localStorage.getItem("currentsubtitle");
-                let listtitle = localStorage.getItem("currentlisttitle");
+                // let sublistTitle = localStorage.getItem("currentsubtitle");
+                // let listtitle = localStorage.getItem("currentlisttitle");
                 // window.location.href = `/tasks/list`;
-                openSection(
-                  `${subList_id},${google_list_id}`,
-                  sublistTitle,
-                  listtitle
-                );
+                // openSection(
+                //   `${subList_id},${google_list_id}`,
+                //   sublistTitle,
+                //   listtitle
+                // );
 
                 // window.location.reload();
                 closeSectionModal();
+                getAllSublistAndSection(`${google_list_id}`,`${subList_id}`)
+
               }
               closeSectionModal();
             })
@@ -1307,11 +1348,13 @@
             .then((response) => response.json())
             .then((data) => {
               if (data.message === "Section added successfully") {
+                
                 // window.location.href = `/tasks/list`;
                 let title = localStorage.getItem("currentTitle");
-                addListSection(`${google_list_id}`, title);
+                // addListSection(`${google_list_id}`, title);
                 // window.location.reload();
                 closeSectionModal();
+                getAllSublistAndSection(`${google_list_id}`,null);
               }
               closeSectionModal();
             })
@@ -1321,21 +1364,13 @@
         });
 
 
-  function openForm() {
-  fetch(`/tasks/listTasks`)
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      
-      if (data && data.data) {
-        const taskLists = data.data.map((item) => item.taskList);
+    function openForm() {
+      const localData = JSON.parse(localStorage.getItem("allListAndTask"));
+
+      if (localData && localData.data) {
+        const taskLists = localData.data.map((item) => item.taskList);
         const selectBox = document.getElementById("list");
         selectBox.innerHTML = '<option>Choose List</option>';
-
         taskLists.forEach((taskList) => {
           const option = document.createElement("option");
           option.value = taskList.id;
@@ -1343,15 +1378,13 @@
           selectBox.appendChild(option);
         });
       } else {
-        console.error("Unexpected API response structure:", data);
+        console.error("Unexpected local data structure or missing data:", localData);
       }
+
       document.getElementById("formContainer").classList.remove("hidden");
       configureSaveButton("add");
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
-    });
-  }
+    }
+
 
 
   function closeForm() {
@@ -1370,110 +1403,112 @@
 
   let allListAndSection;
 
-function getListId(selectElement, taskSection, taskSublist) {
-  const selectedValue = selectElement.value || selectElement ;
-  fetch(`/tasks/subList/all?google_list_id=${selectedValue}`)
-    .then((response) => response.json())
-    .then((data) => {
-      allListAndSection = data;
-      
-      const sublistSelect = document.getElementById('sublist');
-      sublistSelect.innerHTML = '<option>Choose Sublist</option>';
-      let sublistid;
-      data.sublists.forEach((sublist) => {
-        const option = document.createElement('option');
-        option.value = sublist.sublist_id;
-        option.textContent = sublist.sublist_name;
-        if (taskSublist && sublist.sublist_name === taskSublist) {
-          option.selected = true;
-        }
+  function getListId(selectElement, taskSection, taskSublist) {
+  let matchingSubList;
+  let sublistsArray;
+  const selectedValue = selectElement.value || selectElement;
+  const localDataSublist = JSON.parse(localStorage.getItem("allSublistAndSection"));
 
-        sublistSelect.appendChild(option);
-      });
-      const selectedSublistId = sublistSelect.value;
-      selectedSublist(selectedSublistId, taskSublist, taskSection);
+  if (localDataSublist && localDataSublist.data.google_lists) {
+    const sublistdata = Object.values(localDataSublist.data.google_lists);
+    matchingSubList = sublistdata.find(
+      (list) => list.google_list_id === selectedValue
+    );
+    allListAndSection = matchingSubList
+  }
 
-        const sectionSelect = document.getElementById('section');
-        sectionSelect.innerHTML = '<option>Choose Section</option>'; // Reset dropdown
-        const selectedSublistdata = data.sublists.find(
-        (sublist) =>
-          sublist.sublist_id === selectedSublistId ||
-          (taskSublist && sublist.sublist_name === taskSublist)
-      );
-        const hasInvestmentSublist = data.sublists.some(sublist => sublist.sublist_name === taskSublist);
-        if(hasInvestmentSublist){
-          if (selectedSublistdata && selectedSublistdata.sections) {
-        Object.values(selectedSublistdata.sections).forEach((section) => {
-          const option = document.createElement("option");
-          option.value = section.section_id;
-          option.textContent = section.section_name;
-          if (taskSection && section.section_name === taskSection) {
-            option.selected = true;
-          }
-          sectionSelect.appendChild(option);
-        });
+  const sublistSelect = document.getElementById("sublist");
+  sublistSelect.innerHTML = '<option>Choose Sublist</option>';
+
+  if (matchingSubList && matchingSubList.sublists) {
+    sublistsArray = Object.values(matchingSubList.sublists);
+
+    sublistsArray.forEach((sublist) => {
+      const option = document.createElement("option");
+      option.value = sublist.sublist_id;
+      option.textContent = sublist.sublist_name;
+
+      if (taskSublist && sublist.sublist_name === taskSublist) {
+        option.selected = true;
       }
-        }else{
-        data.google_list_sections.forEach((section) => {
-          const option = document.createElement('option');
-          option.value = section.section_id;
-          option.textContent = section.section_name;
 
-          if (taskSection && section.section_name === taskSection) {
-            option.selected = true;
-          }
+      sublistSelect.appendChild(option);
+    });
+  }
 
-          sectionSelect.appendChild(option);
-        });
-
-      }
-        // data.sublists.forEach((sublist) => {
-        //   if (sublist.sections) {
-        //     const sections = Object.values(sublist.sections);
-        //     sections.forEach((section) => {
-        //       const option = document.createElement('option');
-        //       option.value = section.section_id;
-        //       option.textContent = section.section_name;
-
-        //       if (taskSection && section.section_name === taskSection) {
-        //         option.selected = true;
-        //       }
-
-        //       sectionSelect.appendChild(option);
-        //     });
-          // }
-        // });
-
-    })
-    .catch((error) => console.error("Error fetching data:", error));
-}
-
-
-function selectedSublist(selectElementOrId, sublistName = null, sublistSection = null) {
-  const selectedSublistId =
-    typeof selectElementOrId === "object" ? selectElementOrId.value : selectElementOrId;
-
-   const sectionSelect = document.getElementById("section");
+  const selectedSublistId = sublistSelect.value || taskSublist;
+  const sectionSelect = document.getElementById("section");
   sectionSelect.innerHTML = '<option>Choose Section</option>';
-  if (allListAndSection) {
-    if (selectedSublistId === "Choose Sublist" || !selectedSublistId) {
-      allListAndSection.google_list_sections.forEach((section) => {
+
+  const selectedSublistData = sublistsArray?.find(
+    (sublist) =>
+      sublist.sublist_id === selectedSublistId ||
+      (taskSublist && sublist.sublist_name === taskSublist)
+  );
+
+  const hasInvestmentSublist = sublistsArray?.some(
+    (sublist) => sublist.sublist_name === taskSublist
+  );
+  selectedSublist(selectedSublistId, taskSublist, taskSection);
+
+  if (hasInvestmentSublist) {
+    if (selectedSublistData && selectedSublistData.sections) {
+      Object.values(selectedSublistData.sections).forEach((section) => {
         const option = document.createElement("option");
         option.value = section.section_id;
         option.textContent = section.section_name;
 
-        if (sublistSection && section.section_name === sublistSection) {
+        if (taskSection && section.section_name === taskSection) {
           option.selected = true;
         }
 
         sectionSelect.appendChild(option);
       });
+    }
+  } 
+  // else if (matchingSubList && matchingSubList.sections) {
+  //   // If no matching sublist, use the sections directly from the list
+  //   const listSection = Object.values(matchingSubList.sections)
+  //   listSection.map((section) => {
+  //     const option = document.createElement("option");
+  //     option.value = section.section_id;
+  //     option.textContent = section.section_name;
+
+  //     if (taskSection && section.section_name === taskSection) {
+  //       option.selected = true;
+  //     }
+
+  //     sectionSelect.appendChild(option);
+  //   });
+  // }
+}
+
+function selectedSublist(selectElementOrId, sublistName = null, sublistSection = null) {
+  const selectedSublistId =
+    typeof selectElementOrId === "object" ? selectElementOrId.value : selectElementOrId;
+   const sectionSelect = document.getElementById("section");
+  sectionSelect.innerHTML = '<option>Choose Section</option>';
+  if (allListAndSection) {
+    if (selectedSublistId === "Choose Sublist" || !selectedSublistId) {
+        SectionArray = Object.values(allListAndSection.sections);
+        SectionArray.map((section) => {
+            const option = document.createElement("option");
+            option.value = section.section_id;
+            option.textContent = section.section_name;
+
+            if (sublistSection && section.section_name === sublistSection) {
+              option.selected = true;
+            }
+
+            sectionSelect.appendChild(option);
+          });
     } else {
-      const selectedSublist = allListAndSection.sublists.find(
+      const sublistData = Object.values(allListAndSection.sublists)
+      const selectedSublist = sublistData?.find(
         (sublist) =>
           sublist.sublist_id === selectedSublistId ||
           (sublistName && sublist.sublist_name === sublistName)
-      );
+      ); 
 
 
       if (selectedSublist && selectedSublist.sections) {
@@ -1490,6 +1525,7 @@ function selectedSublist(selectElementOrId, sublistName = null, sublistSection =
     }
   }
 }
+
 
 function configureSaveButton(actionType, taskId = null) {
   const saveButton = document.getElementById("saveButton");
@@ -1613,13 +1649,19 @@ function selectItem(item) {
 
   selectedItem = item;
   let subListData;
+  let matcheddata;
   const storedData = localStorage.getItem("allListAndTask");
     if (selectedValue === "Sublists") {
-      fetch(`/tasks/subList/all?google_list_id=${baseID}`)
-        .then((response) => response.json())
-        .then((data) => {
+        const getSublistdataByLocal = JSON.parse(localStorage.getItem("allSublistAndSection"));
+        if (getSublistdataByLocal && getSublistdataByLocal.data.google_lists) {
+        const filterdata = Object.values(getSublistdataByLocal.data.google_lists);
+        matcheddata = filterdata.find(
+          (list) => list.google_list_id === baseID
+        );
+        }
 
-          const subListData = data.sublists;
+        
+          const subListData = Object.values(matcheddata.sublists);
           const dataContainer = document.getElementById("data-container");
           if (dataContainer) {
             dataContainer.innerHTML = "";
@@ -1760,10 +1802,6 @@ function selectItem(item) {
               }
             }
           }
-        })
-        .catch((error) => {
-          console.error("Error fetching sublists:", error);
-        });
     }
 
     if(selectedValue=='Sections'){
@@ -2326,6 +2364,7 @@ document.addEventListener("DOMContentLoaded", () => {
   localStorage.setItem("currentView", todayLabel);
   filterTasks(todayDate, todayLabel);
   callAllListAndTask()
+  getAllSublistAndSection()
 });
 
 

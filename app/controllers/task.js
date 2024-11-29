@@ -440,14 +440,14 @@ exports.getListSectionsByListId = async (req, res) => {
         }
 
         // Check if google_list_id exists in the user's data
-        if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
-            return res.status(404).json({ message: 'List not found' });
-        }
+        // if (!Udata.google_lists || !Udata.google_lists[google_list_id]) {
+        //     return res.status(404).json({ message: 'List not found' });
+        // }
 
         // Retrieve sections for the specified google_list_id
-        const sections = Udata.google_lists[google_list_id].sections || {};
+        // const sections = Udata.google_lists[google_list_id].sections || {};
 
-        res.status(200).json({ message: 'Sections retrieved successfully', sections:Object.values(sections) });
+        res.status(200).json({ message: 'Sections retrieved successfully', data:Udata });
     } catch (error) {
         console.error('Error retrieving Google list sections:', error);
         res.status(500).json({ message: 'Failed to retrieve Google list sections' });
